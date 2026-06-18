@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BoomBigNose ERP — Dashboard</title>
+  <link rel="stylesheet" href="css/admin.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <span>🐘</span>
+      <span>BoomBigNose <strong style="color:#818cf8">ERP</strong></span>
+    </div>
+
+    <div class="sidebar-section-title">Main</div>
+    <div class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span> Dashboard</div>
+    <div class="nav-item" data-page="orders"><span class="nav-icon">🛒</span> Orders <span class="nav-badge">4</span></div>
+    <div class="nav-item" data-page="customers"><span class="nav-icon">👥</span> Customers</div>
+    <div class="nav-item" data-page="products"><span class="nav-icon">📦</span> Products</div>
+
+    <div class="sidebar-section-title">Finance</div>
+    <div class="nav-item" data-page="invoices"><span class="nav-icon">🧾</span> Invoices</div>
+    <div class="nav-item" data-page="finance"><span class="nav-icon">💰</span> Accounting</div>
+
+    <div class="sidebar-section-title">Operations</div>
+    <div class="nav-item" data-page="inventory"><span class="nav-icon">🏭</span> Inventory</div>
+    <div class="nav-item" data-page="hr"><span class="nav-icon">🪪</span> HR & Payroll</div>
+    <div class="nav-item" data-page="reports"><span class="nav-icon">📈</span> Reports</div>
+
+    <div class="sidebar-section-title">System</div>
+    <div class="nav-item" data-page="settings"><span class="nav-icon">⚙️</span> Settings</div>
+
+    <div class="sidebar-footer">
+      <div class="avatar">A</div>
+      <div class="sidebar-footer-info">
+        <strong>Admin User</strong>
+        <span>admin@boombignose.org</span>
+      </div>
+      <button class="logout-btn" onclick="window.location.href='index.html'" title="Logout">⏏</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content">
+
+    <!-- TOPBAR -->
+    <header class="topbar" id="topbar">
+      <button class="icon-btn" id="sidebarToggle" style="display:none">☰</button>
+      <div>
+        <div class="topbar-title" id="topbarTitle">Dashboard</div>
+        <div class="topbar-sub" id="topbarSub">Welcome back, Admin</div>
+      </div>
+      <div class="topbar-spacer"></div>
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" placeholder="Search anything..." />
+      </div>
+      <div class="topbar-actions">
+        <div class="icon-btn">🌙</div>
+        <div class="icon-btn" style="position:relative">🔔<span class="notif-dot"></span></div>
+        <div class="avatar" style="width:34px;height:34px;font-size:13px;cursor:pointer">A</div>
+      </div>
+    </header>
+
+    <!-- PAGES -->
+    <div class="page">
+
+      <!-- ===================== DASHBOARD ===================== -->
+      <div class="page-section active" id="page-dashboard">
+        <div class="kpi-grid">
+          <div class="kpi-card blue">
+            <div class="kpi-icon">💰</div>
+            <div class="kpi-label">Total Revenue (MTD)</div>
+            <div class="kpi-value">฿2,418,500</div>
+            <div class="kpi-change up">▲ 12.4% vs last month</div>
+          </div>
+          <div class="kpi-card green">
+            <div class="kpi-icon">🛒</div>
+            <div class="kpi-label">New Orders</div>
+            <div class="kpi-value">1,284</div>
+            <div class="kpi-change up">▲ 8.1% vs last month</div>
+          </div>
+          <div class="kpi-card orange">
+            <div class="kpi-icon">👥</div>
+            <div class="kpi-label">Active Customers</div>
+            <div class="kpi-value">348</div>
+            <div class="kpi-change up">▲ 3.2% vs last month</div>
+          </div>
+          <div class="kpi-card purple">
+            <div class="kpi-icon">📦</div>
+            <div class="kpi-label">Low Stock Items</div>
+            <div class="kpi-value">17</div>
+            <div class="kpi-change down">▲ 5 more than last week</div>
+          </div>
+        </div>
+
+        <div class="charts-row">
+          <div class="chart-card">
+            <h3>Monthly Revenue (฿)</h3>
+            <div class="bar-chart" id="revenueChart"></div>
+          </div>
+          <div class="chart-card">
+            <h3>Orders by Status</h3>
+            <div class="donut-wrap">
+              <svg width="120" height="120" viewBox="0 0 120 120" id="donutChart"></svg>
+              <div class="donut-legend" id="donutLegend"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-header">
+            <h3>Recent Orders</h3>
+            <div class="table-actions">
+              <button class="btn btn-outline btn-sm" onclick="switchPage('orders')">View All →</button>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Order #</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="recentOrdersBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===================== ORDERS ===================== -->
+      <div class="page-section" id="page-orders">
+        <div class="table-card">
+          <div class="table-header">
+            <h3>All Orders</h3>
+            <div class="table-actions">
+              <select class="filter-select" id="orderFilter">
+                <option value="all">All Status</option>
+                <option value="Pending">Pending</option>
+                <option value="Processing">Processing</option>
+                <option value="Shipped">Shipped</option>
+                <option value="Delivered">Delivered</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+              <button class="btn btn-primary btn-sm" onclick="openModal('orderModal')">+ New Order</button>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Order #</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="ordersBody"></tbody>
+          </table>
+          <div class="pagination">
+            <span id="orderPagInfo"></span>
+            <div class="page-btns" id="orderPageBtns"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== CUSTOMERS ===================== -->
+      <div class="page-section" id="page-customers">
+        <div class="table-card">
+          <div class="table-header">
+            <h3>Customers</h3>
+            <div class="table-actions">
+              <div class="search-box" style="padding:5px 10px">
+                <span>🔍</span>
+                <input type="text" placeholder="Search customers..." id="customerSearch" style="width:160px" />
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="openModal('customerModal')">+ Add Customer</button>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Company</th><th>Email</th><th>Phone</th><th>Orders</th><th>Total Spend</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="customersBody"></tbody>
+          </table>
+          <div class="pagination">
+            <span id="custPagInfo"></span>
+            <div class="page-btns" id="custPageBtns"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== PRODUCTS ===================== -->
+      <div class="page-section" id="page-products">
+        <div class="table-card">
+          <div class="table-header">
+            <h3>Products</h3>
+            <div class="table-actions">
+              <select class="filter-select" id="productCategoryFilter">
+                <option value="all">All Categories</option>
+                <option>Electronics</option><option>Office Supplies</option>
+                <option>Furniture</option><option>Software</option>
+              </select>
+              <button class="btn btn-primary btn-sm" onclick="openModal('productModal')">+ Add Product</button>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr><th>SKU</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="productsBody"></tbody>
+          </table>
+          <div class="pagination">
+            <span id="prodPagInfo"></span>
+            <div class="page-btns" id="prodPageBtns"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== INVOICES ===================== -->
+      <div class="page-section" id="page-invoices">
+        <div class="table-card">
+          <div class="table-header">
+            <h3>Invoices</h3>
+            <div class="table-actions">
+              <select class="filter-select">
+                <option>All</option><option>Paid</option><option>Unpaid</option><option>Overdue</option>
+              </select>
+              <button class="btn btn-primary btn-sm" onclick="openModal('invoiceModal')">+ Create Invoice</button>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Invoice #</th><th>Customer</th><th>Amount</th><th>Due Date</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="invoicesBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===================== FINANCE ===================== -->
+      <div class="page-section" id="page-finance">
+        <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+          <div class="kpi-card green">
+            <div class="kpi-icon">📈</div>
+            <div class="kpi-label">Total Income (YTD)</div>
+            <div class="kpi-value">฿14.2M</div>
+            <div class="kpi-change up">▲ 18% YoY</div>
+          </div>
+          <div class="kpi-card red" style="--red:#ef4444">
+            <div class="kpi-icon">📉</div>
+            <div class="kpi-label">Total Expenses (YTD)</div>
+            <div class="kpi-value">฿9.8M</div>
+            <div class="kpi-change down">▲ 11% YoY</div>
+          </div>
+          <div class="kpi-card blue">
+            <div class="kpi-icon">💵</div>
+            <div class="kpi-label">Net Profit (YTD)</div>
+            <div class="kpi-value">฿4.4M</div>
+            <div class="kpi-change up">▲ 31% YoY</div>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><h3>Journal Entries</h3>
+            <button class="btn btn-primary btn-sm">+ New Entry</button>
+          </div>
+          <table>
+            <thead><tr><th>Date</th><th>Description</th><th>Account</th><th>Debit</th><th>Credit</th><th>Balance</th></tr></thead>
+            <tbody id="financeBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===================== INVENTORY ===================== -->
+      <div class="page-section" id="page-inventory">
+        <div class="summary-row">
+          <div class="summary-card">
+            <div class="summary-icon blue">📦</div>
+            <div class="summary-text"><strong>1,842</strong><span>Total SKUs</span></div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-icon orange">⚠️</div>
+            <div class="summary-text"><strong>17</strong><span>Low Stock Alerts</span></div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-icon green">✅</div>
+            <div class="summary-text"><strong>฿12.4M</strong><span>Inventory Value</span></div>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><h3>Stock Levels</h3>
+            <div class="table-actions">
+              <button class="btn btn-outline btn-sm">Export</button>
+              <button class="btn btn-primary btn-sm">+ Stock In</button>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>SKU</th><th>Product</th><th>Warehouse</th><th>On Hand</th><th>Reorder Pt.</th><th>Status</th></tr></thead>
+            <tbody id="inventoryBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===================== HR ===================== -->
+      <div class="page-section" id="page-hr">
+        <div class="summary-row">
+          <div class="summary-card">
+            <div class="summary-icon blue">👥</div>
+            <div class="summary-text"><strong>48</strong><span>Total Employees</span></div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-icon green">✅</div>
+            <div class="summary-text"><strong>42</strong><span>Active</span></div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-icon orange">🏖️</div>
+            <div class="summary-text"><strong>6</strong><span>On Leave Today</span></div>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><h3>Employees</h3>
+            <div class="table-actions">
+              <button class="btn btn-primary btn-sm" onclick="openModal('hrModal')">+ Add Employee</button>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>Name</th><th>Department</th><th>Position</th><th>Salary</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="hrBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===================== REPORTS ===================== -->
+      <div class="page-section" id="page-reports">
+        <div class="kpi-grid">
+          <div class="kpi-card blue"><div class="kpi-icon">📊</div><div class="kpi-label">Top Product</div><div class="kpi-value" style="font-size:18px">Laptop Pro X</div><div class="kpi-change up">482 units sold</div></div>
+          <div class="kpi-card green"><div class="kpi-icon">🏆</div><div class="kpi-label">Top Customer</div><div class="kpi-value" style="font-size:18px">Mega Corp Ltd</div><div class="kpi-change up">฿480,000 total</div></div>
+          <div class="kpi-card orange"><div class="kpi-icon">📅</div><div class="kpi-label">Best Month</div><div class="kpi-value" style="font-size:18px">March 2026</div><div class="kpi-change up">฿2.8M revenue</div></div>
+          <div class="kpi-card purple"><div class="kpi-icon">📉</div><div class="kpi-label">Avg Order Value</div><div class="kpi-value">฿1,884</div><div class="kpi-change up">▲ 6.2% vs last mo.</div></div>
+        </div>
+        <div class="charts-row">
+          <div class="chart-card">
+            <h3>Sales by Category</h3>
+            <div id="categoryChart" style="display:flex;flex-direction:column;gap:12px;margin-top:8px"></div>
+          </div>
+          <div class="chart-card">
+            <h3>Quick Export</h3>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+              <button class="btn btn-outline" style="justify-content:flex-start;gap:12px">📄 Sales Report (PDF)</button>
+              <button class="btn btn-outline" style="justify-content:flex-start;gap:12px">📊 P&L Statement (Excel)</button>
+              <button class="btn btn-outline" style="justify-content:flex-start;gap:12px">📦 Stock Report (Excel)</button>
+              <button class="btn btn-outline" style="justify-content:flex-start;gap:12px">🪪 Payroll Summary (PDF)</button>
+              <button class="btn btn-outline" style="justify-content:flex-start;gap:12px">🧾 Tax Report (Thai)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== SETTINGS ===================== -->
+      <div class="page-section" id="page-settings">
+        <div class="settings-grid">
+          <div class="settings-nav">
+            <div class="settings-nav-item active" data-tab="general">General</div>
+            <div class="settings-nav-item" data-tab="security">Security</div>
+            <div class="settings-nav-item" data-tab="integrations">Integrations</div>
+            <div class="settings-nav-item" data-tab="notifications">Notifications</div>
+            <div class="settings-nav-item" data-tab="billing">Billing</div>
+          </div>
+          <div class="settings-section">
+            <div id="settings-general">
+              <h3>General Settings</h3>
+              <div class="form-group"><label>Company Name</label><input type="text" value="BoomBigNose Co., Ltd." /></div>
+              <div class="form-row">
+                <div class="form-group"><label>Currency</label><select><option>THB — Thai Baht</option><option>USD</option><option>SGD</option></select></div>
+                <div class="form-group"><label>Timezone</label><select><option>Asia/Bangkok (GMT+7)</option><option>UTC</option></select></div>
+              </div>
+              <div class="form-group"><label>Tax ID (เลขประจำตัวผู้เสียภาษี)</label><input type="text" value="0105550012345" /></div>
+              <div class="form-group"><label>Default VAT Rate</label><select><option>7% (Standard)</option><option>0% (Export)</option></select></div>
+              <button class="btn btn-primary" style="margin-top:8px">Save Changes</button>
+            </div>
+            <div id="settings-security" style="display:none">
+              <h3>Security</h3>
+              <div class="settings-field">
+                <div class="settings-field-info"><strong>Two-Factor Authentication</strong><span>Add an extra layer of security</span></div>
+                <button class="toggle off" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button>
+              </div>
+              <div class="settings-field">
+                <div class="settings-field-info"><strong>Session Timeout</strong><span>Auto-logout after inactivity</span></div>
+                <select class="filter-select"><option>30 minutes</option><option>1 hour</option><option>8 hours</option></select>
+              </div>
+              <div class="settings-field">
+                <div class="settings-field-info"><strong>Login Alerts</strong><span>Email on new device login</span></div>
+                <button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button>
+              </div>
+            </div>
+            <div id="settings-integrations" style="display:none">
+              <h3>Integrations</h3>
+              <div class="settings-field">
+                <div class="settings-field-info"><strong>Shopee</strong><span>Sync orders from Shopee</span></div>
+                <button class="btn btn-outline btn-sm">Connect</button>
+              </div>
+              <div class="settings-field">
+                <div class="settings-field-info"><strong>Lazada</strong><span>Sync orders from Lazada</span></div>
+                <button class="btn btn-outline btn-sm">Connect</button>
+              </div>
+              <div class="settings-field">
+                <div class="settings-field-info"><strong>LINE Notify</strong><span>Get alerts on LINE</span></div>
+                <button class="btn btn-primary btn-sm">Connected ✓</button>
+              </div>
+              <div class="settings-field">
+                <div class="settings-field-info"><strong>Thai e-Tax Invoice (ETDA)</strong><span>ETAX filing integration</span></div>
+                <button class="btn btn-outline btn-sm">Configure</button>
+              </div>
+            </div>
+            <div id="settings-notifications" style="display:none">
+              <h3>Notifications</h3>
+              <div class="settings-field">
+                <div class="settings-field-info"><strong>Low Stock Alerts</strong><span>When product reaches reorder point</span></div>
+                <button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button>
+              </div>
+              <div class="settings-field">
+                <div class="settings-field-info"><strong>New Order Alerts</strong><span>Instant notification on new order</span></div>
+                <button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button>
+              </div>
+              <div class="settings-field">
+                <div class="settings-field-info"><strong>Overdue Invoice Reminder</strong><span>Daily digest of unpaid invoices</span></div>
+                <button class="toggle off" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button>
+              </div>
+            </div>
+            <div id="settings-billing" style="display:none">
+              <h3>Billing & Plan</h3>
+              <div style="background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);border-radius:10px;padding:16px;margin-bottom:20px">
+                <div style="font-size:13px;color:#818cf8;font-weight:600;margin-bottom:4px">Current Plan: Business</div>
+                <div style="font-size:22px;font-weight:700">฿2,490 / month</div>
+                <div style="font-size:12px;color:#8b8bac;margin-top:4px">Next billing: July 18, 2026</div>
+              </div>
+              <button class="btn btn-outline" style="margin-right:10px">Download Invoice</button>
+              <button class="btn btn-primary">Upgrade to Enterprise</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page -->
+  </div><!-- /main-content -->
+</div><!-- /admin-layout -->
+
+<!-- ===================== MODALS ===================== -->
+
+<!-- Order Modal -->
+<div class="modal-overlay" id="orderModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>New Order</h3>
+      <button class="modal-close" onclick="closeModal('orderModal')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Customer</label><select id="newOrderCust"></select></div>
+      <div class="form-group"><label>Status</label>
+        <select><option>Pending</option><option>Processing</option><option>Shipped</option><option>Delivered</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Product</label><select id="newOrderProd"></select></div>
+      <div class="form-group"><label>Quantity</label><input type="number" value="1" min="1" /></div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea rows="2" placeholder="Optional notes..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('orderModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addOrder()">Create Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- Customer Modal -->
+<div class="modal-overlay" id="customerModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add Customer</h3>
+      <button class="modal-close" onclick="closeModal('customerModal')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Full Name</label><input type="text" id="newCustName" placeholder="Somchai Jaidee" /></div>
+      <div class="form-group"><label>Company</label><input type="text" id="newCustCompany" placeholder="Company Co., Ltd." /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Email</label><input type="email" id="newCustEmail" placeholder="email@company.com" /></div>
+      <div class="form-group"><label>Phone</label><input type="tel" id="newCustPhone" placeholder="+66 8x xxx xxxx" /></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('customerModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addCustomer()">Add Customer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Product Modal -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add Product</h3>
+      <button class="modal-close" onclick="closeModal('productModal')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Product Name</label><input type="text" id="newProdName" placeholder="Product Name" /></div>
+      <div class="form-group"><label>SKU</label><input type="text" id="newProdSku" placeholder="BBN-001" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Category</label>
+        <select id="newProdCat"><option>Electronics</option><option>Office Supplies</option><option>Furniture</option><option>Software</option></select>
+      </div>
+      <div class="form-group"><label>Price (฿)</label><input type="number" id="newProdPrice" placeholder="0" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Initial Stock</label><input type="number" id="newProdStock" placeholder="0" /></div>
+      <div class="form-group"><label>Reorder Point</label><input type="number" id="newProdReorder" placeholder="10" /></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('productModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addProduct()">Add Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- Invoice Modal -->
+<div class="modal-overlay" id="invoiceModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Create Invoice</h3>
+      <button class="modal-close" onclick="closeModal('invoiceModal')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Customer</label><select id="newInvCust"></select></div>
+      <div class="form-group"><label>Due Date</label><input type="date" id="newInvDue" /></div>
+    </div>
+    <div class="form-group"><label>Amount (฿)</label><input type="number" id="newInvAmount" placeholder="0" /></div>
+    <div class="form-group"><label>Notes</label><textarea rows="2" placeholder="Payment terms, etc."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('invoiceModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addInvoice()">Create Invoice</button>
+    </div>
+  </div>
+</div>
+
+<!-- HR Modal -->
+<div class="modal-overlay" id="hrModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add Employee</h3>
+      <button class="modal-close" onclick="closeModal('hrModal')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Full Name</label><input type="text" id="newEmpName" placeholder="Firstname Lastname" /></div>
+      <div class="form-group"><label>Department</label>
+        <select id="newEmpDept"><option>Sales</option><option>Finance</option><option>Operations</option><option>IT</option><option>HR</option><option>Marketing</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Position</label><input type="text" id="newEmpPos" placeholder="Job Title" /></div>
+      <div class="form-group"><label>Salary (฿)</label><input type="number" id="newEmpSalary" placeholder="25000" /></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('hrModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addEmployee()">Add Employee</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/admin.js"></script>
+</body>
+</html>
