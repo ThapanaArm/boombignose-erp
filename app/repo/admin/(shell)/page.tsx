@@ -26,7 +26,7 @@ const fmt = (n: number) =>
 
 const EMPTY_FORM = {
   contractNo: "", borrowerName: "", borrowerIdNo: "", phone: "",
-  vehicleInfo: "", licensePlate: "",
+  vehicleInfo: "", licensePlate: "", chassisNo: "",
   loanAmount: "", monthlyPayment: "",
   startDate: "", endDate: "",
   overdueMonths: "0", overdueAmount: "0",
@@ -62,7 +62,7 @@ export default function RepoAdminPage() {
     setForm({
       contractNo: loan.contractNo, borrowerName: loan.borrowerName,
       borrowerIdNo: loan.borrowerIdNo, phone: loan.phone,
-      vehicleInfo: loan.vehicleInfo, licensePlate: loan.licensePlate,
+      vehicleInfo: loan.vehicleInfo, licensePlate: loan.licensePlate, chassisNo: loan.chassisNo,
       loanAmount: String(loan.loanAmount), monthlyPayment: String(loan.monthlyPayment),
       startDate: loan.startDate, endDate: loan.endDate,
       overdueMonths: String(loan.overdueMonths), overdueAmount: String(loan.overdueAmount),
@@ -156,6 +156,10 @@ export default function RepoAdminPage() {
       <div className="form-group">
         <label>รายละเอียดรถยนต์</label>
         <input value={form.vehicleInfo} onChange={f("vehicleInfo")} placeholder="ยี่ห้อ รุ่น ปี สี" />
+      </div>
+      <div className="form-group">
+        <label>เลขตัวรถ (chassis/VIN)</label>
+        <input value={form.chassisNo} onChange={f("chassisNo")} placeholder="เช่น MR0FR22G701234567" />
       </div>
       <div className="form-row">
         <div className="form-group">

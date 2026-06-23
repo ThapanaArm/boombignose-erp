@@ -49,9 +49,14 @@ export default function RepoSearchPage() {
               </div>
             </div>
           </div>
-          <a href="/repo/admin/login" style={styles.adminLink}>
-            เข้าสู่ระบบเจ้าหน้าที่ →
-          </a>
+          <div style={{ display: "flex", gap: 8 }}>
+            <a href="/repo/agent/login" style={styles.adminLink}>
+              พนักงานสนาม →
+            </a>
+            <a href="/repo/admin/login" style={styles.adminLink}>
+              เจ้าหน้าที่ออฟฟิศ →
+            </a>
+          </div>
         </div>
       </header>
 

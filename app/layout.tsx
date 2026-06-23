@@ -10,16 +10,16 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "BoomBigNose ERP — Smart Business Management",
+  title: "AutoFinance Thailand — ระบบตรวจสอบและจัดการสินเชื่อยานยนต์",
   description:
-    "BoomBigNose ERP unifies sales, inventory, purchasing, finance, and HR into one powerful platform built for growing businesses in Southeast Asia.",
+    "ตรวจสอบสถานะสินเชื่อรถยนต์ และระบบหลังบ้านสำหรับจัดการสัญญา งานยึดรถ และพนักงานสนาม",
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" className={inter.variable}>
+    <html lang="th" data-scroll-behavior="smooth" className={inter.variable}>
       <body>{children}</body>
     </html>
   );

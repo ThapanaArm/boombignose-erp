@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import type { Loan } from "@/lib/repo-store";
 
@@ -15,21 +15,22 @@ const STATUS_MAP: Record<string, { label: string; color: string; icon: string; d
 const fmt = (n: number) =>
   n.toLocaleString("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 });
 
-export default function RepoResultPage({ params }: { params: { id: string } }) {
+export default function RepoResultPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const [loan, setLoan] = useState<Loan | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/repo/loans/${params.id}`)
+    fetch(`/api/repo/loans/${id}`)
       .then((r) => {
         if (!r.ok) { setNotFound(true); return null; }
         return r.json();
       })
       .then((d) => { if (d) setLoan(d.loan); })
       .finally(() => setLoading(false));
-  }, [params.id]);
+  }, [id]);
 
   if (loading) return <CenterMessage icon="⏳" msg="กำลังโหลดข้อมูล..." />;
   if (notFound || !loan) return <CenterMessage icon="📭" msg="ไม่พบข้อมูลสัญญา" />;

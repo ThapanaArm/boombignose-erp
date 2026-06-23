@@ -16,8 +16,10 @@ export interface Loan {
   borrowerName: string;
   borrowerIdNo: string;
   phone: string;
+  company: string;
   vehicleInfo: string;
   licensePlate: string;
+  chassisNo: string;
   loanAmount: number;
   monthlyPayment: number;
   startDate: string;
@@ -39,8 +41,10 @@ export const loans: Loan[] = [
     borrowerName: "สมชาย ใจดี",
     borrowerIdNo: "1-1001-23456-78-9",
     phone: "081-234-5678",
+    company: "ไทยพาณิชย์ ลีสซิ่ง",
     vehicleInfo: "Toyota Fortuner 2.4G 4WD 2022 (สีขาว)",
     licensePlate: "กข-1234 กรุงเทพมหานคร",
+    chassisNo: "MR0FR22G701234567",
     loanAmount: 1_200_000,
     monthlyPayment: 22_500,
     startDate: "2022-03-01",
@@ -58,8 +62,10 @@ export const loans: Loan[] = [
     borrowerName: "วิไล สุขใจ",
     borrowerIdNo: "3-4002-56789-01-2",
     phone: "089-987-6543",
+    company: "กรุงศรี ออโต้",
     vehicleInfo: "Honda CR-V 1.5 Turbo EL 4WD 2021 (สีดำ)",
     licensePlate: "คง-5678 เชียงใหม่",
+    chassisNo: "MRHRW2860MP012345",
     loanAmount: 980_000,
     monthlyPayment: 18_200,
     startDate: "2021-07-01",
@@ -77,8 +83,10 @@ export const loans: Loan[] = [
     borrowerName: "ประสิทธิ์ มีสุข",
     borrowerIdNo: "5-5003-34567-23-4",
     phone: "062-111-2222",
+    company: "ทิสโก้ ออโต้",
     vehicleInfo: "Isuzu D-Max 1.9 Ddi L 2020 (สีเทา)",
     licensePlate: "งจ-9012 ขอนแก่น",
+    chassisNo: "MPATFS85JKT067890",
     loanAmount: 750_000,
     monthlyPayment: 13_800,
     startDate: "2020-11-01",
@@ -96,8 +104,10 @@ export const loans: Loan[] = [
     borrowerName: "นิรันดร์ แสงทอง",
     borrowerIdNo: "1-2004-45678-34-5",
     phone: "095-333-4444",
+    company: "ธนชาต DRIVE",
     vehicleInfo: "Mitsubishi Pajero Sport GT Premium 4WD 2023 (สีเงิน)",
     licensePlate: "ฉช-3456 นครราชสีมา",
+    chassisNo: "JMYLYV98WNJ045678",
     loanAmount: 1_550_000,
     monthlyPayment: 28_700,
     startDate: "2023-01-01",
@@ -115,8 +125,10 @@ export const loans: Loan[] = [
     borrowerName: "อารีย์ เพชรสวย",
     borrowerIdNo: "2-6005-56789-45-6",
     phone: "098-555-6666",
+    company: "เมืองไทย ลีสซิ่ง",
     vehicleInfo: "Mazda CX-5 2.0 C 2021 (สีแดง)",
     licensePlate: "ซฌ-7890 ภูเก็ต",
+    chassisNo: "JM0KFA2W600123456",
     loanAmount: 890_000,
     monthlyPayment: 16_500,
     startDate: "2021-05-01",
@@ -134,8 +146,10 @@ export const loans: Loan[] = [
     borrowerName: "บุญมา รักดี",
     borrowerIdNo: "3-8006-67890-56-7",
     phone: "086-777-8888",
+    company: "FORD PRIME MOTOR CO., LTD.",
     vehicleInfo: "Ford Ranger 2.0 Turbo Wildtrak 4WD 2022 (สีน้ำเงิน)",
     licensePlate: "ญฐ-1234 สุราษฎร์ธานี",
+    chassisNo: "MNCLSFE50NW056789",
     loanAmount: 1_050_000,
     monthlyPayment: 19_400,
     startDate: "2022-09-01",
@@ -163,6 +177,13 @@ export function searchLoans(q: string): Loan[] {
       l.licensePlate.toLowerCase().includes(query) ||
       l.borrowerName.toLowerCase().includes(query)
   );
+}
+
+/** ค้นหาจากทะเบียนรถ (partial match) — ใช้ในพอร์ทัลพนักงานสนาม */
+export function searchByPlate(plate: string): Loan[] {
+  const p = plate.toLowerCase().replace(/\s+/g, "");
+  if (!p) return [];
+  return loans.filter((l) => l.licensePlate.toLowerCase().replace(/\s+/g, "").includes(p));
 }
 
 export function createLoan(data: Omit<Loan, "id" | "createdAt">): Loan {

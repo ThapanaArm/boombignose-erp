@@ -28,6 +28,7 @@ const NAV: NavSection[] = [
   {
     title: "ปฏิบัติการ",
     items: [
+      { href: "/repo/admin/requests", label: "คำขอข้อมูล", icon: "📨", sub: "อนุมัติคำขอข้อมูลรถจากพนักงานสนาม" },
       { href: "/repo/admin/import", label: "นำเข้า PDF", icon: "📄", sub: "อ่านเอกสารสินเชื่อเพื่อสร้าง Job" },
       { href: "/repo/admin/chat", label: "แชทพนักงานสนาม", icon: "💬", sub: "สื่อสารกับพนักงานสนาม" },
     ],
