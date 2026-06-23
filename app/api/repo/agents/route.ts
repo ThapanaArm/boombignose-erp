@@ -11,8 +11,11 @@ export async function POST(req: NextRequest) {
     name: body.name ?? "",
     username: body.username ?? "",
     password: body.password ?? "1234",
+    email: body.email ?? "",
     phone: body.phone ?? "",
+    address: body.address ?? "",
     zone: body.zone ?? "",
+    newsletter: !!body.newsletter,
     status: body.status ?? "available",
   });
   return NextResponse.json({ agent: sanitizeAgent(agent) }, { status: 201 });

@@ -80,6 +80,7 @@ export default function AgentLoginPage() {
             {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
           </button>
         </form>
+        <Link href="/repo/agent/register" className="back-link" style={{ color: "var(--primary-light)" }}>ยังไม่มีบัญชี? สมัครเป็นพนักงานสนาม</Link>
         <Link href="/repo" className="back-link">← กลับหน้าค้นหา</Link>
       </div>
     </div>

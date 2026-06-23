@@ -12,7 +12,7 @@ const STATUS: { value: AgentStatus; label: string; color: string }[] = [
 ];
 const statusOf = (s: AgentStatus) => STATUS.find((x) => x.value === s) ?? STATUS[0];
 
-const EMPTY = { name: "", username: "", password: "", phone: "", zone: "", status: "available" as AgentStatus };
+const EMPTY = { name: "", username: "", password: "", email: "", phone: "", address: "", zone: "", status: "available" as AgentStatus };
 
 export default function AgentsPage() {
   const [items, setItems] = useState<PublicAgent[]>([]);
@@ -34,7 +34,7 @@ export default function AgentsPage() {
   const openAdd = () => { setForm({ ...EMPTY }); setAddOpen(true); };
   const openEdit = (a: PublicAgent) => {
     setEdit(a);
-    setForm({ name: a.name, username: a.username, password: "", phone: a.phone, zone: a.zone, status: a.status });
+    setForm({ name: a.name, username: a.username, password: "", email: a.email, phone: a.phone, address: a.address, zone: a.zone, status: a.status });
   };
 
   const save = async () => {
@@ -83,6 +83,16 @@ export default function AgentsPage() {
         <div className="form-group">
           <label>{edit ? "รหัสผ่าน (เว้นว่าง = ไม่เปลี่ยน)" : "รหัสผ่าน *"}</label>
           <input type="text" value={form.password} onChange={f("password")} placeholder={edit ? "••••••" : "รหัสผ่าน"} />
+        </div>
+      </div>
+      <div className="form-row">
+        <div className="form-group">
+          <label>อีเมล</label>
+          <input type="email" value={form.email} onChange={f("email")} placeholder="you@email.com" />
+        </div>
+        <div className="form-group">
+          <label>ที่อยู่</label>
+          <input value={form.address} onChange={f("address")} placeholder="ที่อยู่" />
         </div>
       </div>
       <div className="form-row">
