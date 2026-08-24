@@ -1,0 +1,2906 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WMS Pro — ระบบบริหารจัดการคลังสินค้า</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --primary: #3b82f6;
+    --primary-dark: #2563eb;
+    --primary-light: rgba(59,130,246,.16);
+    --ink: #e7ecf5;
+    --muted: #8a94ab;
+    --border: #262f47;
+    --divider: rgba(255,255,255,.06);
+    --bg: #0a0f1c;
+    --card: #121a2c;
+    --card2: #1a2338;
+    --success: #22c55e;
+    --success-light: rgba(34,197,94,.16);
+    --danger: #f87171;
+    --danger-light: rgba(248,113,113,.16);
+    --warning: #fbbf24;
+    --warning-light: rgba(251,191,36,.16);
+    --purple: #a78bfa;
+    --purple-light: rgba(167,139,250,.16);
+    --sidebar: #080c17;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,.35), 0 4px 16px rgba(0,0,0,.25);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,.55);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:'Prompt','Noto Sans Thai',sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.55;
+    font-size:14px;
+  }
+
+  /* ===== Layout ===== */
+  .app { display:flex; min-height:100vh; }
+
+  /* ===== Sidebar ===== */
+  .sidebar {
+    width:250px; background:var(--sidebar); color:#9aa5bd;
+    display:flex; flex-direction:column; position:fixed; inset:0 auto 0 0; z-index:50;
+    overflow-y:auto; border-right:1px solid var(--border);
+  }
+  .sidebar .brand {
+    display:flex; align-items:center; gap:10px; padding:20px 18px 16px;
+    color:#fff; font-weight:800; font-size:1.1rem;
+  }
+  .brand-mark {
+    width:36px; height:36px; border-radius:10px; flex:none;
+    background:linear-gradient(135deg,var(--primary),var(--purple));
+    display:grid; place-items:center; font-size:1.15rem;
+  }
+  .brand small { display:block; font-weight:400; font-size:.7rem; color:var(--muted); line-height:1.2; }
+  .nav-group { padding:10px 12px 4px; font-size:.68rem; font-weight:700; letter-spacing:.08em; color:#4d5871; text-transform:uppercase; }
+  .nav-item {
+    display:flex; align-items:center; gap:10px; padding:9px 14px; margin:1px 8px;
+    border-radius:8px; cursor:pointer; color:#8a94ab; font-weight:500; font-size:.9rem;
+    transition:.15s; border:none; background:none; width:calc(100% - 16px); text-align:left; font-family:inherit;
+  }
+  .nav-item:hover { background:rgba(255,255,255,.06); color:var(--ink); }
+  .nav-item.active { background:var(--primary); color:#fff; font-weight:600; }
+  .nav-item .ico { width:20px; text-align:center; font-size:1rem; flex:none; }
+  .nav-item .badge-n {
+    margin-left:auto; background:var(--danger); color:#fff; font-size:.68rem; font-weight:700;
+    min-width:18px; height:18px; border-radius:9px; display:grid; place-items:center; padding:0 5px;
+  }
+  .sidebar .user-box {
+    margin-top:auto; padding:14px 18px; border-top:1px solid rgba(255,255,255,.08);
+    display:flex; align-items:center; gap:10px; font-size:.82rem;
+  }
+  .avatar { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#f59e0b,#ef4444); display:grid; place-items:center; color:#fff; font-weight:700; flex:none; }
+
+  /* ===== Main ===== */
+  .main { flex:1; margin-left:250px; display:flex; flex-direction:column; min-width:0; }
+  .topbar {
+    background:var(--card); border-bottom:1px solid var(--border);
+    padding:0 28px; height:60px; display:flex; align-items:center; gap:16px;
+    position:sticky; top:0; z-index:40;
+  }
+  .topbar h1 { font-size:1.15rem; font-weight:700; color:var(--ink); }
+  .topbar .crumb { color:var(--muted); font-size:.82rem; }
+  .topbar .right { margin-left:auto; display:flex; align-items:center; gap:12px; }
+  .wh-select {
+    padding:7px 12px; border:1px solid var(--border); border-radius:8px;
+    font-family:inherit; font-size:.85rem; background:var(--card2); color:var(--ink); cursor:pointer;
+  }
+  .content { padding:24px 28px 48px; }
+
+  /* ===== Cards / KPI ===== */
+  .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:22px; }
+  .kpi {
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    padding:18px 20px; box-shadow:var(--shadow); display:flex; gap:14px; align-items:center;
+  }
+  .kpi .kico { width:46px; height:46px; border-radius:12px; display:grid; place-items:center; font-size:1.4rem; flex:none; }
+  .kpi .num { font-size:1.5rem; font-weight:800; line-height:1.2; color:var(--ink); }
+  .kpi .lbl { font-size:.8rem; color:var(--muted); }
+  .k-blue { background:var(--primary-light); } .k-green { background:var(--success-light); }
+  .k-amber { background:var(--warning-light); } .k-red { background:var(--danger-light); }
+  .k-purple { background:var(--purple-light); }
+
+  .card {
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    box-shadow:var(--shadow); margin-bottom:20px; overflow:hidden;
+  }
+  .card-head {
+    padding:14px 20px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  }
+  .card-head h3 { font-size:1rem; font-weight:700; color:var(--ink); }
+  .card-head .spacer { flex:1; }
+  .card-body { padding:18px 20px; }
+
+  /* ===== Table ===== */
+  .tbl-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:.86rem; }
+  th {
+    text-align:left; padding:10px 14px; background:var(--card2); color:var(--muted);
+    font-weight:600; font-size:.76rem; letter-spacing:.03em; border-bottom:1px solid var(--border);
+    white-space:nowrap;
+  }
+  td { padding:10px 14px; border-bottom:1px solid var(--divider); vertical-align:middle; color:var(--ink); }
+  tr:last-child td { border-bottom:none; }
+  tbody tr:hover { background:rgba(255,255,255,.03); }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
+  .mono { font-family:ui-monospace,Consolas,monospace; font-size:.82rem; }
+  .empty-row td { text-align:center; color:var(--muted); padding:28px; }
+
+  /* ===== Badges ===== */
+  .badge {
+    display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:999px;
+    font-size:.74rem; font-weight:600; white-space:nowrap;
+  }
+  .b-blue { background:var(--primary-light); color:#93c5fd; }
+  .b-green { background:var(--success-light); color:#4ade80; }
+  .b-amber { background:var(--warning-light); color:#fcd34d; }
+  .b-red { background:var(--danger-light); color:#fca5a5; }
+  .b-gray { background:rgba(255,255,255,.08); color:var(--muted); }
+  .b-purple { background:var(--purple-light); color:#c4b5fd; }
+  .dot { width:7px; height:7px; border-radius:50%; background:currentColor; }
+
+  /* ===== Buttons / Forms ===== */
+  .btn {
+    display:inline-flex; align-items:center; gap:7px; padding:8px 16px;
+    border-radius:8px; font-family:inherit; font-size:.86rem; font-weight:600;
+    cursor:pointer; border:none; transition:.15s; text-decoration:none;
+  }
+  .btn-primary { background:var(--primary); color:#fff; }
+  .btn-primary:hover { background:var(--primary-dark); }
+  .btn-success { background:var(--success); color:#06280f; }
+  .btn-success:hover { filter:brightness(1.08); }
+  .btn-outline { background:var(--card2); color:var(--ink); border:1px solid var(--border); }
+  .btn-outline:hover { border-color:var(--primary); color:#93c5fd; }
+  .btn-danger-o { background:var(--card2); color:#fca5a5; border:1px solid rgba(248,113,113,.35); }
+  .btn-danger-o:hover { background:var(--danger-light); }
+  .btn-sm { padding:5px 11px; font-size:.78rem; border-radius:7px; }
+  .btn:disabled { opacity:.5; cursor:not-allowed; }
+
+  label { display:block; font-size:.8rem; font-weight:600; margin-bottom:5px; color:var(--ink); }
+  input, select, textarea {
+    width:100%; padding:9px 12px; border:1px solid var(--border); border-radius:8px;
+    font-family:inherit; font-size:.88rem; background:var(--card2); color:var(--ink); outline:none; transition:.15s;
+  }
+  input::placeholder, textarea::placeholder { color:var(--muted); }
+  input:focus, select:focus, textarea:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-light); }
+  .form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; }
+  .field { min-width:0; }
+  .search-box { position:relative; }
+  .search-box input { padding-left:34px; width:230px; }
+  .search-box::before { content:'🔍'; position:absolute; left:11px; top:50%; transform:translateY(-50%); font-size:.8rem; opacity:.5; }
+
+  /* ===== Tabs ===== */
+  .tabs { display:flex; gap:4px; border-bottom:1px solid var(--border); padding:0 20px; background:var(--card); }
+  .tab {
+    padding:12px 18px; cursor:pointer; font-weight:600; font-size:.88rem; color:var(--muted);
+    border:none; background:none; font-family:inherit; border-bottom:2.5px solid transparent; transition:.15s;
+  }
+  .tab:hover { color:var(--ink); }
+  .tab.active { color:#93c5fd; border-bottom-color:var(--primary); }
+
+  /* ===== Modal ===== */
+  .modal-overlay {
+    position:fixed; inset:0; background:rgba(2,6,16,.72); z-index:100;
+    display:none; align-items:flex-start; justify-content:center; padding:48px 16px; overflow-y:auto;
+  }
+  .modal-overlay.open { display:flex; }
+  .modal {
+    background:var(--card); border:1px solid var(--border); border-radius:16px; width:100%; max-width:640px;
+    box-shadow:var(--shadow-lg); animation:pop .18s ease;
+  }
+  .modal.wide { max-width:860px; }
+  @keyframes pop { from { transform:scale(.96) translateY(8px); opacity:0; } }
+  .modal-head { padding:18px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; }
+  .modal-head h3 { font-size:1.05rem; font-weight:700; color:var(--ink); }
+  .modal-close { margin-left:auto; background:none; border:none; font-size:1.3rem; cursor:pointer; color:var(--muted); line-height:1; }
+  .modal-body { padding:22px 24px; }
+  .modal-foot { padding:16px 24px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px; }
+
+  /* ===== Misc ===== */
+  .page { display:none; }
+  .page.active { display:block; }
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media (max-width:1100px){ .grid-2 { grid-template-columns:1fr; } }
+  .steps { display:flex; gap:0; margin-bottom:20px; flex-wrap:wrap; }
+  .step { display:flex; align-items:center; gap:8px; padding:8px 4px; color:var(--muted); font-size:.82rem; font-weight:600; }
+  .step .n { width:26px; height:26px; border-radius:50%; background:var(--card2); color:var(--muted); display:grid; place-items:center; font-size:.78rem; font-weight:700; }
+  .step.done .n { background:var(--success); color:#06280f; }
+  .step.now .n { background:var(--primary); color:#fff; }
+  .step.now { color:#93c5fd; }
+  .step.done { color:#4ade80; }
+  .step-arrow { color:var(--border); margin:0 12px; align-self:center; }
+  .bar-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; font-size:.82rem; }
+  .bar-row .bl { width:110px; flex:none; color:var(--muted); }
+  .bar-track { flex:1; height:22px; background:var(--card2); border-radius:6px; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:6px; display:flex; align-items:center; padding:0 8px; color:#fff; font-size:.72rem; font-weight:700; min-width:fit-content; transition:.4s; }
+  .toast {
+    position:fixed; bottom:24px; right:24px; z-index:200; background:#1c2540; color:#fff; border:1px solid var(--border);
+    padding:12px 20px; border-radius:10px; font-size:.88rem; font-weight:500; box-shadow:var(--shadow-lg);
+    display:flex; align-items:center; gap:10px; opacity:0; transform:translateY(12px); transition:.25s; pointer-events:none;
+  }
+  .toast.show { opacity:1; transform:none; }
+  .loc-chip { display:inline-block; background:rgba(99,102,241,.16); color:#a5b4fc; border:1px solid rgba(99,102,241,.35); padding:2px 8px; border-radius:6px; font-family:ui-monospace,Consolas,monospace; font-size:.78rem; font-weight:600; }
+  .qty-warn { color:#fca5a5; font-weight:700; }
+  .hint { font-size:.78rem; color:var(--muted); margin-top:4px; }
+
+  /* ===== Workflow diagram (dashboard) ===== */
+  .wf-diagram { display:flex; flex-direction:column; min-width:1020px; gap:0; }
+  .wf-diagram-sm { display:flex; min-width:720px; }
+  .wf-row { display:flex; align-items:stretch; }
+  .wf-connector { display:flex; align-items:flex-start; height:22px; }
+  .wf-card {
+    flex:1 1 0; min-width:170px; background:var(--card2); border:1.5px solid var(--border); border-radius:12px;
+    padding:14px 16px; position:relative; text-align:left; transition:.2s;
+  }
+  .wf-card.wf-ghost { background:transparent; border:none; padding:0; min-height:0; }
+  .wf-arrow { flex:0 0 28px; position:relative; }
+  .wf-arrow::before {
+    content:''; position:absolute; top:29px; left:0; right:0;
+    border-top:2px dashed var(--border);
+  }
+  .wf-down-connector { flex:0 0 28px; display:flex; align-items:center; justify-content:center; color:var(--border); font-size:1.1rem; line-height:1; }
+  .wf-head { display:flex; align-items:center; gap:10px; }
+  .wf-num {
+    flex:none; width:30px; height:30px; border-radius:50%; background:var(--primary);
+    color:#fff; font-weight:800; font-size:.85rem; display:grid; place-items:center;
+  }
+  .wf-title { font-weight:700; font-size:.92rem; color:var(--ink); }
+  .wf-sub { font-size:.74rem; color:var(--muted); margin:5px 0 12px; padding-left:40px; line-height:1.35; }
+  .wf-metric { padding-left:40px; font-size:.98rem; font-weight:800; color:#4ade80; }
+  .wf-metric .wf-unit { font-weight:600; font-size:.78rem; margin-left:3px; }
+  .wf-current { border-color:var(--warning); box-shadow:0 0 0 3px rgba(251,191,36,.22), var(--shadow); }
+  .wf-current .wf-num { background:var(--warning); color:#3a2a00; }
+  .wf-current .wf-metric { color:var(--warning); }
+  .section-note { background:var(--primary-light); border:1px solid rgba(59,130,246,.35); color:#93c5fd; border-radius:10px; padding:12px 16px; font-size:.84rem; margin-bottom:18px; }
+
+  @media (max-width:900px){
+    .sidebar { width:64px; }
+    .sidebar .brand span, .nav-group, .nav-item .txt, .user-box .uinfo, .brand small { display:none; }
+    .main { margin-left:64px; }
+    .content { padding:18px 14px 40px; }
+  }
+  @media print {
+    .sidebar, .topbar, .btn, .tabs { display:none !important; }
+    .main { margin:0; }
+    body { background:#fff !important; color:#0f172a !important; }
+    .card, .kpi { background:#fff !important; border-color:#e2e8f0 !important; box-shadow:none !important; }
+    th { background:#f8fafc !important; }
+    td, th, .card-head h3, .kpi .num { color:#0f172a !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">📦</div>
+      <span>WMS Pro<small>Warehouse Management</small></span>
+    </div>
+
+    <div class="nav-group">ภาพรวม</div>
+    <button class="nav-item active" data-page="dashboard"><span class="ico">📊</span><span class="txt">แดชบอร์ด</span></button>
+
+    <div class="nav-group">Inbound Management</div>
+    <button class="nav-item" data-page="inbound" data-itab=""><span class="ico">📝</span><span class="txt">Prepare ASN</span><span class="badge-n" id="nav-inbound-n"></span></button>
+    <button class="nav-item" data-page="inbound" data-itab="รอรับ"><span class="ico">📥</span><span class="txt">Receive Goods</span></button>
+    <button class="nav-item" data-page="inbound" data-itab="รอตรวจสอบ"><span class="ico">🔍</span><span class="txt">Inspection</span></button>
+    <button class="nav-item" data-page="putaway"><span class="ico">🗄️</span><span class="txt">Putaway</span><span class="badge-n" id="nav-putaway-n"></span></button>
+
+    <div class="nav-group">Outbound Management</div>
+    <button class="nav-item" data-page="picking" data-otab=""><span class="ico">🧾</span><span class="txt">Delivery Order</span><span class="badge-n" id="nav-pick-n"></span></button>
+    <button class="nav-item" data-page="picking" data-otab="รอจัด,กำลังจัด"><span class="ico">🛒</span><span class="txt">Picking</span></button>
+    <button class="nav-item" data-page="picking" data-otab="จัดครบแล้ว"><span class="ico">📦</span><span class="txt">Packing</span></button>
+    <button class="nav-item" data-page="picking" data-otab="แพ็คแล้ว"><span class="ico">🔍</span><span class="txt">Inspection</span></button>
+    <button class="nav-item" data-page="shipping"><span class="ico">🚚</span><span class="txt">Shipping</span></button>
+
+    <div class="nav-group">Inventory Management</div>
+    <button class="nav-item" data-page="stock"><span class="ico">📋</span><span class="txt">ภาพรวมสต๊อก</span></button>
+    <button class="nav-item" data-page="relocation"><span class="ico">🔁</span><span class="txt">Re-Location</span></button>
+    <button class="nav-item" data-page="adjustment"><span class="ico">✏️</span><span class="txt">Adjustment Stock</span></button>
+
+    <div class="nav-group">Report &amp; Analyst</div>
+    <button class="nav-item" data-page="reports" data-rtab="rp-stock"><span class="ico">📦</span><span class="txt">Stock Balance</span></button>
+    <button class="nav-item" data-page="reports" data-rtab="rp-move"><span class="ico">🔁</span><span class="txt">Stock Movement</span></button>
+    <button class="nav-item" data-page="reports" data-rtab="rp-availinv"><span class="ico">🟩</span><span class="txt">Available Inventory</span></button>
+    <button class="nav-item" data-page="reports" data-rtab="rp-invstatus"><span class="ico">🏷️</span><span class="txt">Inventory Status</span></button>
+    <button class="nav-item" data-page="reports" data-rtab="rp-quarantine"><span class="ico">🔒</span><span class="txt">Quarantine</span></button>
+    <button class="nav-item" data-page="reports" data-rtab="rp-stockcard"><span class="ico">📇</span><span class="txt">Stock Card</span></button>
+    <button class="nav-item" data-page="reports" data-rtab="rp-aging"><span class="ico">⏳</span><span class="txt">Inventory Aging</span></button>
+    <button class="nav-item" data-page="reports" data-rtab="rp-slow"><span class="ico">🐢</span><span class="txt">Slow-moving / Non-moving</span></button>
+    <button class="nav-item" data-page="reports" data-rtab="rp-minmax"><span class="ico">📉</span><span class="txt">Minimum–Maximum Stock</span></button>
+    <button class="nav-item" data-page="reports" data-rtab="rp-negative"><span class="ico">➖</span><span class="txt">Negative Inventory</span></button>
+    <button class="nav-item" data-page="reports" data-rtab="rp-valuation"><span class="ico">💰</span><span class="txt">Inventory Valuation</span></button>
+    <button class="nav-item" data-page="reports" data-rtab="rp-lot"><span class="ico">🔢</span><span class="txt">Lot / Serial Balance</span></button>
+    <button class="nav-item" data-page="reports" data-rtab="rp-expiry"><span class="ico">⌛</span><span class="txt">Expiry Report</span></button>
+    <button class="nav-item" data-page="reports" data-rtab="rp-space"><span class="ico">🏗️</span><span class="txt">การใช้พื้นที่คลัง</span></button>
+    <button class="nav-item" data-page="reports" data-rtab="rp-avail"><span class="ico">🟢</span><span class="txt">พื้นที่ว่าง/เต็ม</span></button>
+    <button class="nav-item" data-page="reports" data-rtab="rp-comply"><span class="ico">⚠️</span><span class="txt">Storage Rule</span></button>
+    <button class="nav-item" data-page="reports" data-rtab="rp-summary"><span class="ico">📊</span><span class="txt">สรุปกิจกรรมคลัง</span></button>
+
+    <div class="nav-group">Setting</div>
+    <button class="nav-item" data-page="settings" data-stab="set-products"><span class="ico">📦</span><span class="txt">Product</span></button>
+    <button class="nav-item" data-page="settings" data-stab="set-units"><span class="ico">📐</span><span class="txt">Unit of Measure</span></button>
+    <button class="nav-item" data-page="settings" data-stab="set-locations"><span class="ico">📍</span><span class="txt">Location</span></button>
+    <button class="nav-item" data-page="settings" data-stab="set-zones"><span class="ico">🗺️</span><span class="txt">Zone</span></button>
+    <button class="nav-item" data-page="settings" data-stab="set-wh"><span class="ico">🏭</span><span class="txt">Warehouse</span></button>
+    <button class="nav-item" data-page="settings" data-stab="set-users"><span class="ico">👥</span><span class="txt">User</span></button>
+    <button class="nav-item" data-page="settings" data-stab="set-customers"><span class="ico">🧑‍💼</span><span class="txt">Customer</span></button>
+    <button class="nav-item" data-page="settings" data-stab="set-vendors"><span class="ico">🚛</span><span class="txt">Vendor</span></button>
+
+    <div class="user-box">
+      <div class="avatar">ธ</div>
+      <div class="uinfo">
+        <div style="color:#fff;font-weight:600">ธาปนา (Admin)</div>
+        <div style="font-size:.72rem;color:var(--muted)">it-digital@megachem.co.th</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="page-title">แดชบอร์ด</h1>
+        <div class="crumb" id="page-crumb">ภาพรวมคลังสินค้า</div>
+      </div>
+      <div class="right">
+        <select class="wh-select" id="wh-filter" onchange="renderAll()">
+          <option value="">ทุกคลังสินค้า</option>
+        </select>
+        <span class="badge b-green"><span class="dot"></span> ออนไลน์</span>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ========== PAGE: DASHBOARD ========== -->
+      <section class="page active" id="page-dashboard">
+        <div class="card">
+          <div class="card-head"><h3>🗺️ ภาพรวมกระบวนการคลังสินค้า</h3></div>
+          <div class="card-body" style="overflow-x:auto">
+            <div class="wf-diagram" id="wf-diagram"></div>
+          </div>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi"><div class="kico k-blue">📦</div><div><div class="num" id="kpi-sku">0</div><div class="lbl">รายการสินค้า (SKU)</div></div></div>
+          <div class="kpi"><div class="kico k-purple">🔢</div><div><div class="num" id="kpi-stock">0</div><div class="lbl">จำนวนคงคลังรวม</div></div></div>
+          <div class="kpi"><div class="kico k-amber">📥</div><div><div class="num" id="kpi-inbound">0</div><div class="lbl">รอรับเข้า / รอจัดเก็บ</div></div></div>
+          <div class="kpi"><div class="kico k-green">🛒</div><div><div class="num" id="kpi-orders">0</div><div class="lbl">คำสั่งเบิกค้างดำเนินการ</div></div></div>
+          <div class="kpi"><div class="kico k-red">⚠️</div><div><div class="num" id="kpi-low">0</div><div class="lbl">สินค้าต่ำกว่าจุดสั่งซื้อ</div></div></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head"><h3>🔔 งานที่ต้องดำเนินการ</h3></div>
+            <div class="tbl-wrap"><table>
+              <thead><tr><th>ประเภทงาน</th><th>เอกสาร</th><th>รายละเอียด</th><th>สถานะ</th></tr></thead>
+              <tbody id="dash-tasks"></tbody>
+            </table></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>⚠️ สินค้าใกล้หมด (ต่ำกว่าจุดสั่งซื้อ)</h3></div>
+            <div class="tbl-wrap"><table>
+              <thead><tr><th>SKU</th><th>สินค้า</th><th class="num">คงเหลือ</th><th class="num">จุดสั่งซื้อ</th></tr></thead>
+              <tbody id="dash-low"></tbody>
+            </table></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>🕘 ความเคลื่อนไหวล่าสุด (Stock Movement)</h3></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>วัน-เวลา</th><th>ประเภท</th><th>SKU</th><th class="num">จำนวน</th><th>จาก</th><th>ไปยัง</th><th>อ้างอิง</th></tr></thead>
+            <tbody id="dash-moves"></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- ========== PAGE: INBOUND ========== -->
+      <section class="page" id="page-inbound">
+        <div class="card">
+          <div class="card-head">
+            <h3>📥 ใบรับสินค้า (ASN / Goods Receipt)</h3>
+            <div class="spacer"></div>
+            <div class="search-box"><input placeholder="ค้นหาเลขที่ / ผู้ขาย..." oninput="renderInbound(this.value)"></div>
+            <button class="btn btn-outline" onclick="openImportModal('asn')">📄 นำเข้า Excel</button>
+            <button class="btn btn-primary" onclick="openGrnModal()">＋ สร้าง ASN</button>
+          </div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>เลขที่ใบรับ</th><th>อ้างอิง PO</th><th>ผู้ขาย / ที่มา</th><th>คลัง</th><th>วันที่คาดรับ</th><th class="num">รายการ</th><th>สถานะ</th><th></th></tr></thead>
+            <tbody id="tbl-inbound"></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- ========== PAGE: PUTAWAY ========== -->
+      <section class="page" id="page-putaway">
+        <div class="card">
+          <div class="card-head"><h3>🔄 Inbound Flow</h3></div>
+          <div class="card-body" style="overflow-x:auto"><div class="wf-diagram-sm" id="inbound-flow-2"></div></div>
+        </div>
+        <div class="section-note">
+          <b>④ ขั้นตอนการจัดเก็บ (Put away):</b> สินค้าที่ผ่านการตรวจสอบ QC แล้วจะพักที่จุดรับ (RECV) ระบบจะ<b>แนะนำตำแหน่งจัดเก็บตามกติกาของสินค้า (Putaway Rule)</b> เพื่อบังคับให้การหยิบเป็นไปตามเงื่อนไข FIFO / FEFO / LIFO
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>📐 เงื่อนไขการจัดเก็บและหยิบสินค้า (Putaway &amp; Picking Rules)</h3></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>กติกา</th><th>หลักการ</th><th>การออกแบบจุดจัดเก็บ</th><th>ลำดับการหยิบ</th><th>เหมาะกับ</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="badge b-blue">FIFO</span></td>
+                <td>First-In, First-Out — เข้าก่อน ออกก่อน</td>
+                <td>Flow Rack: เติมสินค้าจากด้านหลัง หยิบจากด้านหน้า (โซน F)</td>
+                <td>เรียงตาม<b>วันรับเข้า เก่าสุดก่อน</b></td>
+                <td>สินค้าทั่วไป หมุนเวียนสม่ำเสมอ</td>
+              </tr>
+              <tr>
+                <td><span class="badge b-amber">FEFO</span></td>
+                <td>First-Expired, First-Out — หมดอายุก่อน ออกก่อน</td>
+                <td>หันป้ายวันหมดอายุออกด้านหน้า แบ่งช่องจัดเก็บตามเดือนที่หมดอายุ</td>
+                <td>เรียงตาม<b>วันหมดอายุ ใกล้สุดก่อน</b> (บังคับกรอก EXP ตอนรับเข้า)</td>
+                <td>สินค้ามีวันหมดอายุ เช่น เคมีภัณฑ์ อาหาร ยา</td>
+              </tr>
+              <tr>
+                <td><span class="badge b-purple">LIFO</span></td>
+                <td>Last-In, First-Out — เข้าทีหลัง ออกก่อน</td>
+                <td>Drive-in Rack: จัดเก็บซ้อนทับกันได้ (โซน D)</td>
+                <td>เรียงตาม<b>วันรับเข้า ใหม่สุดก่อน</b></td>
+                <td>สินค้าไม่มีวันหมดอายุ ซ้อนทับได้ เช่น กล่อง วัสดุก่อสร้าง</td>
+              </tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>🗄️ งานจัดเก็บสินค้า (Putaway Tasks)</h3>
+            <div class="spacer"></div>
+            <span class="badge b-amber" id="putaway-count-badge"></span>
+          </div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>งาน</th><th>อ้างอิงใบรับ</th><th>SKU</th><th>สินค้า</th><th>กติกา</th><th>EXP</th><th class="num">จำนวน</th><th>จาก</th><th>จัดเก็บไปยัง (★ = แนะนำตามกติกา)</th><th>สถานะ</th><th></th></tr></thead>
+            <tbody id="tbl-putaway"></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- ========== PAGE: STOCK ========== -->
+      <section class="page" id="page-stock">
+        <div class="kpi-grid">
+          <div class="kpi"><div class="kico k-blue">📦</div><div><div class="num" id="st-kpi-sku">0</div><div class="lbl">SKU มีสต๊อก</div></div></div>
+          <div class="kpi"><div class="kico k-purple">🗄️</div><div><div class="num" id="st-kpi-loc">0</div><div class="lbl">Location ที่ใช้งาน</div></div></div>
+          <div class="kpi"><div class="kico k-red">⚠️</div><div><div class="num" id="st-kpi-low">0</div><div class="lbl">ต่ำกว่าจุดสั่งซื้อ</div></div></div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h3>📋 สต๊อกคงคลังตามตำแหน่ง (Stock by Location)</h3>
+            <div class="spacer"></div>
+            <div class="search-box"><input placeholder="ค้นหา SKU / ชื่อสินค้า / Location..." oninput="renderStock(this.value)"></div>
+            <button class="btn btn-outline" onclick="openMoveModal()">🔁 ย้ายสต๊อก</button>
+            <button class="btn btn-outline" onclick="openAdjustModal()">✏️ ปรับยอด</button>
+          </div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>SKU</th><th>สินค้า</th><th>กติกา</th><th>Lot</th><th>รับเข้า</th><th>EXP</th><th>คลัง</th><th>Zone</th><th>Location</th><th class="num">คงเหลือ</th><th>หน่วย</th><th>สถานะ</th></tr></thead>
+            <tbody id="tbl-stock"></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- ========== PAGE: PICKING ========== -->
+      <section class="page" id="page-picking">
+        <div class="section-note">
+          <b>ขั้นตอนขาออก (Outbound):</b> ⑥ สร้างใบสั่งจ่ายสินค้า (Delivery Order) → ⑦ หยิบสินค้าตามลำดับที่ระบบบังคับตามกติกา FIFO / FEFO / LIFO ของสินค้าแต่ละตัว (Picking Rule) → ⑧ บรรจุหีบห่อ (Packing) → ⑨ ตรวจสอบก่อนส่ง (Inspection) → ⑩ จัดส่ง (Shipping)
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h3 id="picking-head">🛒 ใบสั่งจ่ายสินค้า (Delivery Order)</h3>
+            <div class="spacer"></div>
+            <div class="search-box"><input placeholder="ค้นหาเลขที่ / ลูกค้า..." oninput="renderPicking(this.value)"></div>
+            <button class="btn btn-outline" onclick="openImportModal('do')">📄 นำเข้า Excel</button>
+            <button class="btn btn-primary" onclick="openOrderModal()">＋ สร้าง Delivery Order</button>
+          </div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>เลขที่ DO</th><th>ลูกค้า / แผนก</th><th>วันที่ต้องการ</th><th class="num">รายการ</th><th>สถานะ</th><th></th></tr></thead>
+            <tbody id="tbl-picking"></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- ========== PAGE: RE-LOCATION ========== -->
+      <section class="page" id="page-relocation">
+        <div class="section-note">
+          <b>Re-Location:</b> ย้ายสต๊อกระหว่างตำแหน่งจัดเก็บภายในคลัง (เช่น ย้ายไปโซนที่เหมาะสมตาม Storage Rule หรือรวมสต๊อกกระจัดกระจาย) ระบบบันทึกทุกการย้ายเป็นประวัติ (Stock Movement) เพื่อตรวจสอบย้อนหลังได้
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h3>🔁 ประวัติการย้ายสต๊อก (Relocation History)</h3>
+            <div class="spacer"></div>
+            <button class="btn btn-primary" onclick="openMoveModal()">🔁 ย้ายสต๊อก</button>
+          </div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>วัน-เวลา</th><th>SKU</th><th>สินค้า</th><th class="num">จำนวน</th><th>จาก</th><th>ไปยัง</th><th>อ้างอิง</th><th>ผู้ทำรายการ</th></tr></thead>
+            <tbody id="tbl-relocation"></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- ========== PAGE: ADJUSTMENT STOCK ========== -->
+      <section class="page" id="page-adjustment">
+        <div class="section-note">
+          <b>Adjustment Stock:</b> ปรับยอดสต๊อกให้ตรงกับยอดนับจริง (Cycle Count) กรณีชำรุด สูญหาย หรือแก้ไขข้อมูลผิดพลาด ทุกรายการถูกบันทึกพร้อมเหตุผลเพื่อการตรวจสอบย้อนหลัง
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h3>✏️ ประวัติการปรับยอดสต๊อก (Adjustment History)</h3>
+            <div class="spacer"></div>
+            <button class="btn btn-primary" onclick="openAdjustModal()">✏️ ปรับยอดสต๊อก</button>
+          </div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>วัน-เวลา</th><th>SKU</th><th>สินค้า</th><th class="num">ผลต่าง</th><th>ตำแหน่ง</th><th>เหตุผล</th><th>ผู้ทำรายการ</th></tr></thead>
+            <tbody id="tbl-adjustment"></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- ========== PAGE: SHIPPING ========== -->
+      <section class="page" id="page-shipping">
+        <div class="section-note">
+          <b>⑩ ขั้นตอนการส่งสินค้า (Shipping):</b> ใบสั่งจ่ายที่ผ่านการแพ็คและตรวจสอบก่อนส่ง (⑧–⑨) แล้วจะพร้อมจัดส่ง ระบุขนส่ง/เลข Tracking แล้วยืนยันการส่งออก ระบบบันทึกวันที่ส่ง ปลายทาง และติดตามสถานะได้ตลอดเวลา
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>🚚 การจัดส่งสินค้า (Shipments)</h3></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>เลขที่จัดส่ง</th><th>อ้างอิงใบเบิก</th><th>ปลายทาง</th><th>ขนส่ง</th><th>Tracking No.</th><th>วันที่ส่ง</th><th>สถานะ</th><th></th></tr></thead>
+            <tbody id="tbl-shipping"></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- ========== PAGE: REPORTS ========== -->
+      <section class="page" id="page-reports">
+        <div class="card" id="rp-stock">
+          <div class="card-head">
+            <h3>รายงานสต๊อกสินค้าคงคลัง</h3>
+            <div class="spacer"></div>
+            <button class="btn btn-outline btn-sm" onclick="exportCSV('stock')">⬇️ Export CSV</button>
+            <button class="btn btn-outline btn-sm" onclick="window.print()">🖨️ พิมพ์</button>
+          </div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>SKU</th><th>สินค้า</th><th>หมวด</th><th class="num">ยอดรวมคงเหลือ</th><th>หน่วย</th><th class="num">จุดสั่งซื้อ</th><th>สถานะ</th></tr></thead>
+            <tbody id="tbl-rp-stock"></tbody>
+          </table></div>
+        </div>
+
+        <div class="card" style="display:none" id="rp-move">
+          <div class="card-head">
+            <h3>รายงานความเคลื่อนไหวสต๊อก (รับเข้า–เบิกออก–ย้าย–ปรับยอด)</h3>
+            <div class="spacer"></div>
+            <select id="rp-move-type" style="width:auto" onchange="renderReports()">
+              <option value="">ทุกประเภท</option>
+              <option value="รับเข้า">รับเข้า</option>
+              <option value="จัดเก็บ">จัดเก็บ</option>
+              <option value="เบิกออก">เบิกออก</option>
+              <option value="ส่งออก">ส่งออก</option>
+              <option value="ย้าย">ย้าย</option>
+              <option value="ปรับยอด">ปรับยอด</option>
+            </select>
+            <button class="btn btn-outline btn-sm" onclick="exportCSV('move')">⬇️ Export CSV</button>
+          </div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>วัน-เวลา</th><th>ประเภท</th><th>SKU</th><th>สินค้า</th><th class="num">จำนวน</th><th>จาก</th><th>ไปยัง</th><th>อ้างอิง</th><th>ผู้ทำรายการ</th></tr></thead>
+            <tbody id="tbl-rp-move"></tbody>
+          </table></div>
+        </div>
+
+        <div class="card" style="display:none" id="rp-space">
+          <div class="card-head">
+            <h3>รายงานการใช้พื้นที่คลัง แยกตาม Zone / Rack</h3>
+            <div class="spacer"></div>
+            <button class="btn btn-outline btn-sm" onclick="exportCSV('space')">⬇️ Export CSV</button>
+            <button class="btn btn-outline btn-sm" onclick="window.print()">🖨️ พิมพ์</button>
+          </div>
+          <div class="card-body" style="padding-bottom:6px">
+            <h4 style="margin-bottom:12px; font-size:.92rem">สัดส่วนการใช้พื้นที่ราย Zone</h4>
+            <div id="space-zone-bars"></div>
+          </div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>คลัง</th><th>Zone</th><th>Location (Rack)</th><th>ประเภท</th><th class="num">ความจุ</th><th class="num">ใช้ไป</th><th style="min-width:160px">% การใช้พื้นที่</th><th>สถานะ</th></tr></thead>
+            <tbody id="tbl-rp-space"></tbody>
+          </table></div>
+        </div>
+
+        <div class="card" style="display:none" id="rp-avail">
+          <div class="card-head">
+            <h3>รายงานพื้นที่ว่างและพื้นที่เต็ม</h3>
+            <div class="spacer"></div>
+            <select id="avail-filter" style="width:auto" onchange="renderReports()">
+              <option value="">ทุกสถานะ</option>
+              <option value="ว่าง">🟢 ว่าง</option>
+              <option value="ใช้งานบางส่วน">🔵 ใช้งานบางส่วน</option>
+              <option value="เต็ม">🔴 เต็ม</option>
+            </select>
+            <button class="btn btn-outline btn-sm" onclick="exportCSV('space')">⬇️ Export CSV</button>
+          </div>
+          <div class="card-body" style="padding-bottom:6px"><div class="kpi-grid" id="avail-kpis" style="margin-bottom:6px"></div></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>คลัง</th><th>Zone</th><th>Location</th><th>ประเภท</th><th class="num">ความจุ</th><th class="num">ใช้ไป</th><th class="num">คงเหลือรับได้</th><th>สถานะ</th></tr></thead>
+            <tbody id="tbl-rp-avail"></tbody>
+          </table></div>
+        </div>
+
+        <div class="card" style="display:none" id="rp-comply">
+          <div class="card-head">
+            <h3>รายงานสินค้าไม่เป็นไปตาม Storage Rule</h3>
+            <span class="badge b-red" id="comply-count"></span>
+            <div class="spacer"></div>
+            <button class="btn btn-outline btn-sm" onclick="exportCSV('comply')">⬇️ Export CSV</button>
+          </div>
+          <div class="card-body" style="padding-bottom:0">
+            <p class="hint" style="margin-bottom:10px">เงื่อนไข: สินค้าอันตราย (HAZ) ต้องจัดเก็บในพื้นที่ประเภท <b>Hazmat</b> (โซน H) · สินค้าควบคุมอุณหภูมิ (COLD) ต้องจัดเก็บในพื้นที่ประเภท <b>Cold</b> (โซน C) — ไม่นับสินค้าที่อยู่จุดพัก RECV/SHIP</p>
+          </div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>SKU</th><th>สินค้า</th><th>เงื่อนไขจัดเก็บ</th><th>คลัง</th><th>Location ปัจจุบัน</th><th>ประเภทพื้นที่</th><th class="num">จำนวน</th><th>ข้อแนะนำ</th><th></th></tr></thead>
+            <tbody id="tbl-rp-comply"></tbody>
+          </table></div>
+        </div>
+
+        <!-- ===== Inventory Reports ===== -->
+        <div class="card" style="display:none" id="rp-availinv">
+          <div class="card-head">
+            <h3>🟩 Available Inventory — จำนวนที่ขาย/เบิกได้จริง</h3>
+            <div class="spacer"></div>
+            <button class="btn btn-outline btn-sm" onclick="exportCSV('availinv')">⬇️ Export CSV</button>
+          </div>
+          <div class="card-body" style="padding-bottom:0">
+            <p class="hint" style="margin-bottom:10px"><b>Available = On-hand พร้อมขาย − Reserved</b> · On-hand พร้อมขาย ไม่รวมจุดพัก RECV/SHIP และสต๊อกสถานะ Hold / Damaged / Quarantine · Reserved = ยอดจองจาก DO ที่ยังไม่ได้หยิบ</p>
+          </div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>SKU</th><th>สินค้า</th><th class="num">On-hand ทั้งหมด</th><th class="num">พร้อมขาย</th><th class="num">Reserved</th><th class="num">Hold/Dmg/QT</th><th class="num">จุดพัก</th><th class="num">Available</th><th>หน่วย</th><th>สถานะ</th></tr></thead>
+            <tbody id="tbl-rp-availinv"></tbody>
+          </table></div>
+        </div>
+
+        <div class="card" style="display:none" id="rp-invstatus">
+          <div class="card-head"><h3>🏷️ Inventory Status — แยกตามสถานะสต๊อก</h3></div>
+          <div class="card-body" style="padding-bottom:0"><div class="kpi-grid" id="invstatus-kpis" style="margin-bottom:6px"></div></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>SKU</th><th>สินค้า</th><th>Lot</th><th>คลัง</th><th>Location</th><th class="num">จำนวน</th><th>สถานะ</th><th>เปลี่ยนสถานะ</th></tr></thead>
+            <tbody id="tbl-rp-invstatus"></tbody>
+          </table></div>
+        </div>
+
+        <div class="card" style="display:none" id="rp-quarantine">
+          <div class="card-head"><h3>🔒 Quarantine — สินค้าที่ถูกกักกันรอตรวจสอบ/ตัดสินใจ</h3><span class="badge b-purple" id="quarantine-count"></span></div>
+          <div class="card-body" style="padding-bottom:0">
+            <p class="hint" style="margin-bottom:10px">สินค้าที่อยู่ในสถานะ Quarantine เช่น รอผลตรวจสอบคุณภาพเพิ่มเติม สงสัยปัญหาความปลอดภัย หรือรอการตัดสินใจคืนผู้ขาย/ทำลาย จะถูกกันออกจากยอดพร้อมขาย (Available) โดยอัตโนมัติจนกว่าจะเปลี่ยนสถานะ</p>
+          </div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>SKU</th><th>สินค้า</th><th>Lot</th><th>คลัง</th><th>Location</th><th>EXP</th><th class="num">จำนวน</th><th class="num">อายุกักกัน (วัน)</th><th>ดำเนินการ</th></tr></thead>
+            <tbody id="tbl-rp-quarantine"></tbody>
+          </table></div>
+        </div>
+
+        <div class="card" style="display:none" id="rp-stockcard">
+          <div class="card-head">
+            <h3>📇 Stock Card — ประวัติเข้า-ออกราย SKU</h3>
+            <div class="spacer"></div>
+            <select id="sc-sku" style="width:auto" onchange="renderReports()"></select>
+            <button class="btn btn-outline btn-sm" onclick="exportCSV('stockcard')">⬇️ Export CSV</button>
+          </div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>วัน-เวลา</th><th>ประเภท</th><th>เอกสารอ้างอิง</th><th>จาก</th><th>ไปยัง</th><th class="num">รับเข้า (+)</th><th class="num">จ่ายออก (−)</th><th class="num">โอนย้ายภายใน</th><th class="num">คงเหลือ</th><th>ผู้ทำรายการ</th></tr></thead>
+            <tbody id="tbl-rp-stockcard"></tbody>
+          </table></div>
+        </div>
+
+        <div class="card" style="display:none" id="rp-aging">
+          <div class="card-head"><h3>⏳ Inventory Aging — อายุสินค้าคงคลังตามช่วงวัน</h3></div>
+          <div class="card-body" style="padding-bottom:6px"><div id="aging-bars"></div></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>SKU</th><th>สินค้า</th><th>Lot</th><th>Location</th><th>วันรับเข้า</th><th class="num">อายุ (วัน)</th><th class="num">จำนวน</th><th>ช่วงอายุ</th></tr></thead>
+            <tbody id="tbl-rp-aging"></tbody>
+          </table></div>
+        </div>
+
+        <div class="card" style="display:none" id="rp-slow">
+          <div class="card-head"><h3>🐢 Slow-moving / Non-moving — สินค้าเคลื่อนไหวช้า/ไม่เคลื่อนไหว</h3></div>
+          <div class="card-body" style="padding-bottom:0">
+            <p class="hint" style="margin-bottom:10px">พิจารณาจากการจ่ายออกล่าสุด (เบิกออก/ส่งออก) — <b>Active</b> ≤ 30 วัน · <b>Slow-moving</b> 31–60 วัน · <b>Non-moving</b> เกิน 60 วันหรือไม่เคยจ่ายออก</p>
+          </div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>SKU</th><th>สินค้า</th><th class="num">On-hand</th><th>จ่ายออกล่าสุด</th><th class="num">จำนวนวันไม่เคลื่อนไหว</th><th>ประเภท</th><th class="num">มูลค่าจม (บาท)</th></tr></thead>
+            <tbody id="tbl-rp-slow"></tbody>
+          </table></div>
+        </div>
+
+        <div class="card" style="display:none" id="rp-minmax">
+          <div class="card-head"><h3>📉 Minimum–Maximum Stock — ต่ำกว่า Min / เกิน Max</h3></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>SKU</th><th>สินค้า</th><th class="num">Min</th><th class="num">Max</th><th class="num">On-hand</th><th class="num">Available</th><th>ระดับสต๊อก</th><th>สถานะ</th><th class="num">แนะนำสั่งซื้อ/ระบาย</th></tr></thead>
+            <tbody id="tbl-rp-minmax"></tbody>
+          </table></div>
+        </div>
+
+        <div class="card" style="display:none" id="rp-negative">
+          <div class="card-head"><h3>➖ Negative Inventory — ตรวจสอบสต๊อกติดลบ</h3><span class="badge b-red" id="negative-count"></span></div>
+          <div class="card-body" style="padding-bottom:0">
+            <p class="hint" style="margin-bottom:10px">สต๊อกติดลบมักเกิดจากการบันทึกตัดจ่ายเกินยอดจริง การปรับยอดผิดพลาด หรือ transaction ซ้ำซ้อน — ระบบนี้ป้องกันการตัดเกินโดยอัตโนมัติ รายงานนี้ใช้ตรวจสอบความถูกต้องของข้อมูล</p>
+          </div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>SKU</th><th>สินค้า</th><th>Lot</th><th>คลัง</th><th>Location</th><th class="num">จำนวน</th><th>ข้อแนะนำ</th></tr></thead>
+            <tbody id="tbl-rp-negative"></tbody>
+          </table></div>
+        </div>
+
+        <div class="card" style="display:none" id="rp-valuation">
+          <div class="card-head">
+            <h3>💰 Inventory Valuation — มูลค่าสินค้าคงคลัง</h3>
+            <span class="badge b-blue">วิธีคิด: Standard Cost (ต้นทุนมาตรฐาน)</span>
+            <div class="spacer"></div>
+            <button class="btn btn-outline btn-sm" onclick="exportCSV('valuation')">⬇️ Export CSV</button>
+          </div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>SKU</th><th>สินค้า</th><th>หมวด</th><th class="num">On-hand</th><th>หน่วย</th><th class="num">ต้นทุน/หน่วย (บาท)</th><th class="num">มูลค่ารวม (บาท)</th><th class="num">% ของมูลค่าคลัง</th></tr></thead>
+            <tbody id="tbl-rp-valuation"></tbody>
+          </table></div>
+        </div>
+
+        <div class="card" style="display:none" id="rp-lot">
+          <div class="card-head"><h3>🔢 Lot / Serial Balance — ยอดคงเหลือแยก Lot</h3></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>SKU</th><th>สินค้า</th><th>Lot / Batch</th><th>วันรับเข้า</th><th>EXP</th><th class="num">คงเหลือ</th><th>หน่วย</th><th>จัดเก็บที่</th><th>สถานะ</th></tr></thead>
+            <tbody id="tbl-rp-lot"></tbody>
+          </table></div>
+        </div>
+
+        <div class="card" style="display:none" id="rp-expiry">
+          <div class="card-head">
+            <h3>⌛ Expiry Report — สินค้าใกล้หมดอายุและหมดอายุแล้ว</h3>
+            <div class="spacer"></div>
+            <button class="btn btn-outline btn-sm" onclick="exportCSV('expiry')">⬇️ Export CSV</button>
+          </div>
+          <div class="card-body" style="padding-bottom:0"><div class="kpi-grid" id="expiry-kpis" style="margin-bottom:6px"></div></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>SKU</th><th>สินค้า</th><th>Lot</th><th>Location</th><th>วันหมดอายุ</th><th class="num">เหลืออีก (วัน)</th><th class="num">จำนวน</th><th>ระดับความเสี่ยง</th><th>ข้อแนะนำ</th></tr></thead>
+            <tbody id="tbl-rp-expiry"></tbody>
+          </table></div>
+        </div>
+
+        <div class="card" style="display:none" id="rp-summary">
+          <div class="card-body">
+            <h3 style="margin-bottom:16px">ปริมาณเคลื่อนไหวแยกตามประเภท</h3>
+            <div id="rp-bars"></div>
+            <h3 style="margin:26px 0 16px">Top 5 สินค้าเคลื่อนไหวมากที่สุด</h3>
+            <div id="rp-top-bars"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== PAGE: SETTINGS ========== -->
+      <section class="page" id="page-settings">
+        <div class="tabs" style="border-radius:12px 12px 0 0; border:1px solid var(--border); border-bottom:none;">
+          <button class="tab active" data-stab="set-products" onclick="switchSetting(this)">📦 สินค้า</button>
+          <button class="tab" data-stab="set-units" onclick="switchSetting(this)">📐 หน่วยสินค้า</button>
+          <button class="tab" data-stab="set-wh" onclick="switchSetting(this)">🏭 Warehouse</button>
+          <button class="tab" data-stab="set-zones" onclick="switchSetting(this)">🗺️ Zone</button>
+          <button class="tab" data-stab="set-locations" onclick="switchSetting(this)">📍 Location</button>
+          <button class="tab" data-stab="set-users" onclick="switchSetting(this)">👥 ผู้ใช้งาน</button>
+          <button class="tab" data-stab="set-customers" onclick="switchSetting(this)">🧑‍💼 ลูกค้า</button>
+          <button class="tab" data-stab="set-vendors" onclick="switchSetting(this)">🚛 ผู้ขาย</button>
+        </div>
+
+        <div class="card" style="border-radius:0 0 12px 12px" id="set-products">
+          <div class="card-head"><h3>ข้อมูลสินค้า (Product Master)</h3><div class="spacer"></div>
+            <button class="btn btn-primary btn-sm" onclick="openMasterModal('product')">＋ เพิ่มสินค้า</button></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>SKU</th><th>ชื่อสินค้า</th><th>หมวดหมู่</th><th>หน่วย</th><th>Dimension<br>ก×ย×ส (ซม.)</th><th class="num">Net Wt.<br>(กก.)</th><th class="num">Gross Wt.<br>(กก.)</th><th>Putaway/Picking Rule</th><th>เงื่อนไขจัดเก็บ</th><th class="num">จุดสั่งซื้อ (Min)</th><th></th></tr></thead>
+            <tbody id="tbl-set-products"></tbody>
+          </table></div>
+        </div>
+
+        <div class="card" style="display:none; border-radius:0 0 12px 12px" id="set-units">
+          <div class="card-head"><h3>หน่วยนับสินค้า (Unit Codes)</h3><div class="spacer"></div>
+            <button class="btn btn-primary btn-sm" onclick="openMasterModal('unit')">＋ เพิ่มหน่วย</button></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>รหัสหน่วย</th><th>ชื่อหน่วย</th><th></th></tr></thead>
+            <tbody id="tbl-set-units"></tbody>
+          </table></div>
+
+          <div class="card-head" style="border-top:1px solid var(--border)">
+            <h3>หน่วยแปลงต่อสินค้า (Units of Measure per Product)</h3>
+            <div class="spacer"></div>
+            <select id="uom-sku-select" style="width:auto" onchange="renderUomPanel()"></select>
+            <button class="btn btn-primary btn-sm" onclick="openAddUomModal()">＋ เพิ่มหน่วยแปลง</button>
+          </div>
+          <div class="card-body" style="padding-bottom:0">
+            <p class="hint" style="margin-bottom:6px">กำหนดหน่วยนับทางเลือกของแต่ละสินค้าเทียบกับหน่วยฐาน (Base Unit) เช่น 1 CTN = 24 PCS — ใช้กรอกจำนวนตอนสร้าง ASN / Delivery Order และนำเข้า Excel ได้เป็นหน่วยที่คุ้นเคย ระบบแปลงเป็นหน่วยฐานให้อัตโนมัติ</p>
+            <div id="uom-panel-subtitle" style="font-weight:700; margin-bottom:8px"></div>
+          </div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>Unit of Measure</th><th>Unit Conversion</th><th></th></tr></thead>
+            <tbody id="tbl-uom-panel"></tbody>
+          </table></div>
+        </div>
+
+        <div class="card" style="display:none; border-radius:0 0 12px 12px" id="set-wh">
+          <div class="card-head"><h3>คลังสินค้า (Warehouse)</h3><div class="spacer"></div>
+            <button class="btn btn-primary btn-sm" onclick="openMasterModal('warehouse')">＋ เพิ่มคลัง</button></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>รหัสคลัง</th><th>ชื่อคลัง</th><th>ที่ตั้ง</th><th></th></tr></thead>
+            <tbody id="tbl-set-wh"></tbody>
+          </table></div>
+        </div>
+
+        <div class="card" style="display:none; border-radius:0 0 12px 12px" id="set-zones">
+          <div class="card-head"><h3>โซนจัดเก็บ (Zone)</h3><div class="spacer"></div>
+            <button class="btn btn-primary btn-sm" onclick="openMasterModal('zone')">＋ เพิ่ม Zone</button></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>รหัส Zone</th><th>ชื่อ Zone</th><th>คลัง</th><th>ประเภท</th><th></th></tr></thead>
+            <tbody id="tbl-set-zones"></tbody>
+          </table></div>
+        </div>
+
+        <div class="card" style="display:none; border-radius:0 0 12px 12px" id="set-locations">
+          <div class="card-head"><h3>ตำแหน่งจัดเก็บ (Location)</h3><div class="spacer"></div>
+            <button class="btn btn-primary btn-sm" onclick="openMasterModal('location')">＋ เพิ่ม Location</button></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>รหัส Location</th><th>คลัง</th><th>Zone</th><th>ประเภท</th><th class="num">ความจุ</th><th></th></tr></thead>
+            <tbody id="tbl-set-locations"></tbody>
+          </table></div>
+        </div>
+
+        <div class="card" style="display:none; border-radius:0 0 12px 12px" id="set-users">
+          <div class="card-head"><h3>ผู้ใช้งานระบบ</h3><div class="spacer"></div>
+            <button class="btn btn-primary btn-sm" onclick="openMasterModal('user')">＋ เพิ่มผู้ใช้</button></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>ชื่อผู้ใช้</th><th>อีเมล</th><th>บทบาท</th><th>สถานะ</th><th></th></tr></thead>
+            <tbody id="tbl-set-users"></tbody>
+          </table></div>
+        </div>
+
+        <div class="card" style="display:none; border-radius:0 0 12px 12px" id="set-customers">
+          <div class="card-head"><h3>ลูกค้า (Customer)</h3><div class="spacer"></div>
+            <button class="btn btn-primary btn-sm" onclick="openMasterModal('customer')">＋ เพิ่มลูกค้า</button></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>รหัสลูกค้า</th><th>ชื่อลูกค้า / แผนก</th><th>ผู้ติดต่อ</th><th>เบอร์โทร</th><th>ที่อยู่</th><th></th></tr></thead>
+            <tbody id="tbl-set-customers"></tbody>
+          </table></div>
+        </div>
+
+        <div class="card" style="display:none; border-radius:0 0 12px 12px" id="set-vendors">
+          <div class="card-head"><h3>ผู้ขาย / ผู้ผลิต (Vendor)</h3><div class="spacer"></div>
+            <button class="btn btn-primary btn-sm" onclick="openMasterModal('vendor')">＋ เพิ่มผู้ขาย</button></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>รหัสผู้ขาย</th><th>ชื่อผู้ขาย</th><th>ผู้ติดต่อ</th><th>เบอร์โทร</th><th>ที่อยู่</th><th></th></tr></thead>
+            <tbody id="tbl-set-vendors"></tbody>
+          </table></div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODALS ================= -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this) closeModal()">
+  <div class="modal" id="modal-box">
+    <div class="modal-head"><h3 id="modal-title">—</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-foot" id="modal-foot"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✅ <span id="toast-msg"></span></div>
+
+<script>
+/* =====================================================
+   WMS Pro — Single-file prototype
+   ข้อมูลทั้งหมดเป็น demo ในหน่วยความจำ (refresh = reset)
+   ===================================================== */
+
+// ---------- Master Data ----------
+const DB = {
+  warehouses: [
+    { code:'WH1', name:'คลังสินค้าหลัก บางนา', address:'บางนา กทม.' },
+    { code:'WH2', name:'คลังสินค้าสาขา ชลบุรี', address:'อ.เมือง ชลบุรี' },
+  ],
+  zones: [
+    { code:'RECV', wh:'WH1', name:'จุดพักรับสินค้า', type:'Receiving' },
+    { code:'A',    wh:'WH1', name:'โซนสินค้าทั่วไป', type:'Storage' },
+    { code:'B',    wh:'WH1', name:'โซนสินค้าหมุนเวียนเร็ว', type:'Fast-moving' },
+    { code:'C',    wh:'WH1', name:'โซนควบคุมอุณหภูมิ', type:'Cold Storage' },
+    { code:'F',    wh:'WH1', name:'โซน Flow Rack (เติมหลัง-หยิบหน้า สำหรับ FIFO)', type:'Flow Rack' },
+    { code:'D',    wh:'WH1', name:'โซน Drive-in Rack (ซ้อนทับ สำหรับ LIFO)', type:'Drive-in' },
+    { code:'H',    wh:'WH1', name:'โซนสินค้าอันตราย (Hazardous)', type:'Hazmat' },
+    { code:'SHIP', wh:'WH1', name:'จุดพักรอจัดส่ง', type:'Shipping' },
+    { code:'A',    wh:'WH2', name:'โซนจัดเก็บทั่วไป', type:'Storage' },
+  ],
+  locations: [
+    { code:'RECV-01', wh:'WH1', zone:'RECV', type:'Staging', cap:9999 },
+    { code:'SHIP-01', wh:'WH1', zone:'SHIP', type:'Staging', cap:9999 },
+    { code:'A-01-01', wh:'WH1', zone:'A', type:'Rack', cap:100 },
+    { code:'A-01-02', wh:'WH1', zone:'A', type:'Rack', cap:100 },
+    { code:'A-02-01', wh:'WH1', zone:'A', type:'Rack', cap:100 },
+    { code:'B-01-01', wh:'WH1', zone:'B', type:'Rack', cap:200 },
+    { code:'B-01-02', wh:'WH1', zone:'B', type:'Rack', cap:200 },
+    { code:'C-01-01', wh:'WH1', zone:'C', type:'Cold', cap:50 },
+    { code:'F-01-01', wh:'WH1', zone:'F', type:'Flow Rack', cap:150 },
+    { code:'F-01-02', wh:'WH1', zone:'F', type:'Flow Rack', cap:150 },
+    { code:'D-01-01', wh:'WH1', zone:'D', type:'Drive-in', cap:400 },
+    { code:'H-01-01', wh:'WH1', zone:'H', type:'Hazmat', cap:80 },
+    { code:'H-01-02', wh:'WH1', zone:'H', type:'Hazmat', cap:80 },
+    { code:'A-01-01', wh:'WH2', zone:'A', type:'Rack', cap:100 },
+  ],
+  units: [
+    { code:'PCS', name:'ชิ้น' }, { code:'BOX', name:'กล่อง' },
+    { code:'CTN', name:'ลัง' }, { code:'KG', name:'กิโลกรัม' }, { code:'SET', name:'ชุด' },
+  ],
+  // storage: GEN = ทั่วไป, COLD = ควบคุมอุณหภูมิ (ต้องอยู่พื้นที่ Cold), HAZ = สินค้าอันตราย (ต้องอยู่พื้นที่ Hazmat)
+  // min/max = จุดสั่งซื้อ/เพดานสต๊อก, cost = ต้นทุนมาตรฐานต่อหน่วย (บาท)
+  // dim = { w, l, h } ซม./หน่วย, netW = น้ำหนักสุทธิ (กก.), grossW = น้ำหนักรวมบรรจุภัณฑ์ (กก.)
+  // uoms = หน่วยทางเลือก: 1 <code> = factor × หน่วยฐาน (unit)
+  products: [
+    { sku:'SKU-1001', name:'น้ำยาทำความสะอาดอเนกประสงค์ 1L', cat:'เคมีภัณฑ์', unit:'PCS', min:50, max:300, cost:45, rule:'FEFO', storage:'HAZ', dim:{w:10,l:10,h:25}, netW:1.0, grossW:1.1,
+      uoms:[ { code:'BOX', factor:12 }, { code:'CTN', factor:48 } ] },
+    { sku:'SKU-1002', name:'ถุงมือยางไนไตร (กล่อง 100 ชิ้น)', cat:'อุปกรณ์', unit:'BOX', min:30, max:150, cost:120, rule:'FIFO', storage:'GEN', dim:{w:24,l:13,h:6}, netW:0.5, grossW:0.55,
+      uoms:[ { code:'CTN', factor:20 } ] },
+    { sku:'SKU-1003', name:'กระดาษ A4 80 แกรม', cat:'สำนักงาน', unit:'CTN', min:20, max:100, cost:550, rule:'FIFO', storage:'GEN', dim:{w:32,l:45,h:25}, netW:12.5, grossW:13.0 },
+    { sku:'SKU-1004', name:'แอลกอฮอล์ 70% ขนาด 5L', cat:'เคมีภัณฑ์', unit:'PCS', min:40, max:200, cost:260, rule:'FEFO', storage:'COLD', dim:{w:19,l:14,h:31}, netW:5.0, grossW:5.4,
+      uoms:[ { code:'KG', factor:0.2 } ] },
+    { sku:'SKU-1005', name:'เทปกาว OPP 2 นิ้ว', cat:'บรรจุภัณฑ์', unit:'PCS', min:100, max:500, cost:18, rule:'FIFO', storage:'GEN', dim:{w:11,l:11,h:5}, netW:0.09, grossW:0.1,
+      uoms:[ { code:'BOX', factor:72 } ] },
+    { sku:'SKU-1006', name:'กล่องลูกฟูก เบอร์ C', cat:'บรรจุภัณฑ์', unit:'PCS', min:200, max:150, cost:9, rule:'LIFO', storage:'GEN', dim:{w:60,l:40,h:2}, netW:0.35, grossW:0.4,
+      uoms:[ { code:'CTN', factor:25 } ] },
+  ],
+  users: [
+    { name:'ธาปนา', email:'it-digital@megachem.co.th', role:'ผู้ดูแลระบบ', active:true },
+    { name:'สมชาย ใจดี', email:'somchai@megachem.co.th', role:'หัวหน้าคลัง', active:true },
+    { name:'วิภา รักงาน', email:'wipa@megachem.co.th', role:'พนักงานคลัง', active:true },
+    { name:'ประยุทธ ขยัน', email:'prayut@megachem.co.th', role:'พนักงานคลัง', active:false },
+  ],
+  customers: [
+    { code:'CUS-001', name:'ฝ่ายผลิต โรงงาน 1', contact:'สมชาย ใจดี', phone:'02-111-2222', address:'บางนา กทม.' },
+    { code:'CUS-002', name:'บจก.ลูกค้าดีเด่น', contact:'คุณอารีย์', phone:'02-333-4444', address:'สมุทรปราการ' },
+  ],
+  vendors: [
+    { code:'VEN-001', name:'บจก.เคมีไทยรุ่งเรือง', contact:'คุณสมพงษ์', phone:'02-555-6666', address:'สมุทรสาคร' },
+    { code:'VEN-002', name:'บจก.แพ็คกิ้งซัพพลาย', contact:'คุณนภา', phone:'02-777-8888', address:'ปทุมธานี' },
+    { code:'VEN-003', name:'บจก.เมดิคอลพลัส', contact:'คุณวีระ', phone:'02-999-0000', address:'นนทบุรี' },
+  ],
+  // stock: หนึ่งแถว = สินค้าใน location หนึ่ง (แยกตาม lot) — inDate = วันรับเข้า, exp = วันหมดอายุ
+  stock: [
+    { sku:'SKU-1001', wh:'WH1', loc:'A-01-01', lot:'L2606A', qty:80, inDate:'2026-07-30', exp:'2027-06-30' },
+    { sku:'SKU-1001', wh:'WH1', loc:'A-01-02', lot:'L2604Z', qty:40, inDate:'2026-05-15', exp:'2026-10-31' },
+    { sku:'SKU-1002', wh:'WH1', loc:'A-01-02', lot:'L2605B', qty:25, inDate:'2026-06-20' },
+    { sku:'SKU-1003', wh:'WH1', loc:'A-02-01', lot:'-', qty:45, inDate:'2026-07-01' },
+    { sku:'SKU-1004', wh:'WH1', loc:'C-01-01', lot:'L2607C', qty:32, inDate:'2026-07-15', exp:'2027-01-31' },
+    { sku:'SKU-1005', wh:'WH1', loc:'F-01-01', lot:'-', qty:150, inDate:'2026-06-01' },
+    { sku:'SKU-1006', wh:'WH1', loc:'B-01-02', lot:'-', qty:120, inDate:'2026-06-10' },
+    { sku:'SKU-1006', wh:'WH1', loc:'D-01-01', lot:'-', qty:80, inDate:'2026-07-20' },
+    { sku:'SKU-1005', wh:'WH2', loc:'A-01-01', lot:'-', qty:60, inDate:'2026-07-10' },
+    // ตัวอย่างสต๊อกสถานะพิเศษ (Hold / Damaged / Quarantine)
+    { sku:'SKU-1002', wh:'WH1', loc:'A-02-01', lot:'L2603X', qty:10, inDate:'2026-04-10', status:'DAMAGED' },
+    { sku:'SKU-1005', wh:'WH1', loc:'B-01-01', lot:'-', qty:20, inDate:'2026-05-20', status:'HOLD' },
+    { sku:'SKU-1004', wh:'WH1', loc:'C-01-01', lot:'L2601Q', qty:8, inDate:'2026-03-05', exp:'2026-08-15', status:'QUARANTINE' },
+    { sku:'SKU-1001', wh:'WH1', loc:'H-01-01', lot:'L2512E', qty:5, inDate:'2026-01-10', exp:'2026-07-15', status:'QUARANTINE' },
+  ],
+  grns: [
+    { id:'ASN-2607-001', po:'PO-2607-115', supplier:'บจก.เคมีไทยรุ่งเรือง', wh:'WH1', date:'2026-07-30', status:'จัดเก็บแล้ว',
+      items:[ { sku:'SKU-1001', expect:100, received:100, passed:100, rejected:0 } ] },
+    { id:'ASN-2607-002', po:'PO-2607-118', supplier:'บจก.แพ็คกิ้งซัพพลาย', wh:'WH1', date:'2026-07-31', status:'รอรับ',
+      items:[ { sku:'SKU-1005', expect:200, received:0 }, { sku:'SKU-1006', expect:300, received:0 } ] },
+    { id:'ASN-2607-003', po:'PO-2607-120', supplier:'บจก.เมดิคอลพลัส', wh:'WH1', date:'2026-07-31', status:'รอรับ',
+      items:[ { sku:'SKU-1002', expect:50, received:0 }, { sku:'SKU-1004', expect:60, received:0 } ] },
+  ],
+  putaway: [], // { id, grn, sku, qty, wh, from, to, status }
+  orders: [
+    { id:'DO-2607-021', customer:'ฝ่ายผลิต โรงงาน 1', date:'2026-07-31', status:'รอจัด',
+      items:[ { sku:'SKU-1001', qty:20, picked:0, from:'' }, { sku:'SKU-1005', qty:30, picked:0, from:'' } ] },
+    { id:'DO-2607-020', customer:'บจก.ลูกค้าดีเด่น', date:'2026-07-30', status:'ส่งแล้ว',
+      pack:{ boxes:2, weight:18 }, qc:'ผ่าน',
+      cartons:[
+        { type:'กล่องลูกฟูก', weight:10, items:{ 'SKU-1003':6 } },
+        { type:'กล่องลูกฟูก', weight:8,  items:{ 'SKU-1003':4 } },
+      ],
+      items:[ { sku:'SKU-1003', qty:10, picked:10, from:'A-02-01' } ] },
+  ],
+  shipments: [
+    { id:'SHP-2607-015', order:'DO-2607-020', dest:'บจก.ลูกค้าดีเด่น (สมุทรปราการ)', carrier:'Kerry Express', tracking:'KEX88012345', date:'2026-07-30', status:'ส่งแล้ว' },
+  ],
+  moves: [
+    { ts:'2026-07-30 09:12', type:'รับเข้า', sku:'SKU-1001', qty:100, from:'ผู้ขาย', to:'RECV-01', ref:'ASN-2607-001', by:'วิภา' },
+    { ts:'2026-07-30 10:05', type:'จัดเก็บ', sku:'SKU-1001', qty:100, from:'RECV-01', to:'A-01-01', ref:'ASN-2607-001', by:'วิภา' },
+    { ts:'2026-07-30 14:20', type:'เบิกออก', sku:'SKU-1003', qty:10, from:'A-02-01', to:'SHIP-01', ref:'DO-2607-020', by:'สมชาย' },
+    { ts:'2026-07-30 16:00', type:'ส่งออก', sku:'SKU-1003', qty:10, from:'SHIP-01', to:'ลูกค้า', ref:'SHP-2607-015', by:'สมชาย' },
+  ],
+};
+
+let seq = { grn:4, pk:22, shp:16, pt:1, mv:0 };
+const CURRENT_USER = 'ธาปนา';
+
+// ---------- Helpers ----------
+const $ = id => document.getElementById(id);
+const fmt = n => Number(n).toLocaleString('th-TH');
+const prod = sku => DB.products.find(p => p.sku === sku) || { name:'?', unit:'', min:0 };
+const unitName = code => (DB.units.find(u => u.code === code) || {name:code}).name;
+const whName = code => (DB.warehouses.find(w => w.code === code) || {name:code}).name;
+const nowTs = () => {
+  const d = new Date();
+  return d.toISOString().slice(0,10) + ' ' + d.toTimeString().slice(0,5);
+};
+const today = () => new Date().toISOString().slice(0,10);
+const pad3 = n => String(n).padStart(3,'0');
+const whFilter = () => $('wh-filter').value;
+
+function totalQty(sku, whOnly) {
+  return DB.stock.filter(s => s.sku === sku && (!whOnly || s.wh === whOnly))
+                 .reduce((a,s) => a + s.qty, 0);
+}
+function logMove(type, sku, qty, from, to, ref) {
+  DB.moves.unshift({ ts:nowTs(), type, sku, qty, from, to, ref, by:CURRENT_USER });
+}
+function addStock(sku, wh, loc, lot, qty, exp, inDate) {
+  const row = DB.stock.find(s => s.sku===sku && s.wh===wh && s.loc===loc && s.lot===lot);
+  if (row) {
+    row.qty += qty;
+    // เก็บวันรับเข้าที่เก่าที่สุด และวันหมดอายุที่ใกล้ที่สุดไว้ (อนุรักษ์นิยมตามกติกา)
+    if (inDate && (!row.inDate || inDate < row.inDate)) row.inDate = inDate;
+    if (exp && (!row.exp || exp < row.exp)) row.exp = exp;
+  }
+  else DB.stock.push({ sku, wh, loc, lot, qty, exp:exp||undefined, inDate:inDate||today() });
+}
+// กติกาการหยิบของสินค้า → ลำดับตำแหน่งที่ต้องหยิบก่อน
+function ruleOf(sku) { return prod(sku).rule || 'FIFO'; }
+function ruleBadge(rule) {
+  const m = { FIFO:'b-blue', FEFO:'b-amber', LIFO:'b-purple' };
+  return `<span class="badge ${m[rule]||'b-gray'}">${rule}</span>`;
+}
+function ruleSortStock(sku, cands) {
+  const rule = ruleOf(sku);
+  const c = [...cands];
+  if (rule === 'FEFO')      c.sort((a,b) => (a.exp||'9999-12-31').localeCompare(b.exp||'9999-12-31') || (a.inDate||'').localeCompare(b.inDate||''));
+  else if (rule === 'LIFO') c.sort((a,b) => (b.inDate||'').localeCompare(a.inDate||''));
+  else /* FIFO */           c.sort((a,b) => (a.inDate||'9999-12-31').localeCompare(b.inDate||'9999-12-31'));
+  return c;
+}
+// สถานะสต๊อกรายแถว (ไม่ระบุ = AVAILABLE)
+const INV_STATUS = {
+  AVAILABLE:  { label:'Available',  badge:'b-green' },
+  HOLD:       { label:'Hold',       badge:'b-amber' },
+  DAMAGED:    { label:'Damaged',    badge:'b-red' },
+  QUARANTINE: { label:'Quarantine', badge:'b-purple' },
+};
+function invStatusBadge(st) { const m = INV_STATUS[st] || INV_STATUS.AVAILABLE; return `<span class="badge ${m.badge}">${m.label}</span>`; }
+function dimText(p) { return p.dim && (p.dim.w || p.dim.l || p.dim.h) ? `${p.dim.w}×${p.dim.l}×${p.dim.h}` : '—'; }
+function grossOf(sku) { return prod(sku).grossW || 0; }
+// Units of Measure: หน่วยฐาน factor 1 + หน่วยทางเลือกของสินค้า
+function uomList(sku) {
+  const p = prod(sku);
+  return [{ code:p.unit, factor:1 }, ...(p.uoms || [])];
+}
+function uomFactor(sku, code) {
+  const u = uomList(sku).find(x => x.code === String(code).toUpperCase());
+  return u ? u.factor : null;
+}
+function uomOptionsHtml(sku, selected) {
+  const base = prod(sku).unit;
+  return uomList(sku).map(u =>
+    `<option value="${u.code}" ${u.code===selected?'selected':''}>${u.code}${u.factor !== 1 ? ` (=${u.factor} ${base})` : ''}</option>`).join('');
+}
+// ใช้กับแถวสินค้าในฟอร์ม ASN/DO (.ln-sku/.ln-qty/.ln-uom/.ln-hint): sync ตัวเลือกหน่วยเมื่อเปลี่ยนสินค้า + แสดงยอดแปลงเป็นหน่วยฐาน
+function refreshLineUom(skuSel) {
+  const row = skuSel.closest('.form-grid');
+  const uomSel = row.querySelector('.ln-uom');
+  uomSel.innerHTML = uomOptionsHtml(skuSel.value, prod(skuSel.value).unit);
+  refreshLineHint(row.querySelector('.ln-qty'));
+}
+function refreshLineHint(qtyEl) {
+  const row = qtyEl.closest('.form-grid');
+  const sku = row.querySelector('.ln-sku').value;
+  const uom = row.querySelector('.ln-uom').value;
+  const qty = +qtyEl.value || 0;
+  const base = prod(sku).unit;
+  const factor = uomFactor(sku, uom) || 1;
+  row.querySelector('.ln-hint').textContent = uom !== base && qty > 0 ? `= ${fmt(+(qty*factor).toFixed(3))} ${base}` : '';
+}
+function daysDiff(from, to) { return Math.floor((new Date(to) - new Date(from)) / 86400000); }
+function dateAddDays(n) { return new Date(Date.now() + n*86400000).toISOString().slice(0,10); }
+// ยอดจองจากใบสั่งจ่ายที่ยังไม่ได้หยิบ (Reserved)
+function reservedQty(sku) {
+  return DB.orders.filter(o => ['รอจัด','กำลังจัด'].includes(o.status))
+    .reduce((a,o) => a + o.items.filter(i => i.sku === sku).reduce((x,i) => x + Math.max(0, i.qty - i.picked), 0), 0);
+}
+// แยกยอดคงคลังของ SKU: พร้อมขาย / ติดสถานะ / อยู่จุดพัก / จอง / เบิกได้จริง
+function invBreakdown(sku, wf) {
+  let sellable = 0, blocked = 0, staging = 0, total = 0;
+  DB.stock.filter(s => s.sku === sku && (!wf || s.wh === wf)).forEach(s => {
+    total += s.qty;
+    if ((s.status || 'AVAILABLE') !== 'AVAILABLE') blocked += s.qty;
+    else if (s.loc === 'RECV-01' || s.loc === 'SHIP-01') staging += s.qty;
+    else sellable += s.qty;
+  });
+  const reserved = reservedQty(sku);
+  return { total, sellable, blocked, staging, reserved, available: Math.max(0, sellable - reserved) };
+}
+function availableQty(sku) { return invBreakdown(sku).available; }
+// เงื่อนไขการจัดเก็บตามประเภทสินค้า (Storage Rule)
+const STORAGE_META = {
+  GEN:  { label:'ทั่วไป',           badge:'b-gray', locType:null },
+  COLD: { label:'ควบคุมอุณหภูมิ',   badge:'b-blue', locType:'Cold' },
+  HAZ:  { label:'สินค้าอันตราย',    badge:'b-red',  locType:'Hazmat' },
+};
+function storageOf(sku) { return prod(sku).storage || 'GEN'; }
+function storageBadge(st) { const m = STORAGE_META[st] || STORAGE_META.GEN; return `<span class="badge ${m.badge}">${m.label}</span>`; }
+// สต๊อกที่จัดเก็บผิดเงื่อนไข (ไม่นับจุดพัก Staging)
+function storageViolations() {
+  const wf = whFilter();
+  const out = [];
+  DB.stock.filter(s => !wf || s.wh === wf).forEach(s => {
+    const st = storageOf(s.sku);
+    const need = STORAGE_META[st].locType;
+    if (!need) return;
+    const loc = DB.locations.find(l => l.code === s.loc && l.wh === s.wh);
+    if (!loc || loc.type === 'Staging') return;
+    if (loc.type !== need) out.push({ ...s, st, locType: loc.type, need });
+  });
+  return out;
+}
+// การใช้พื้นที่รายตำแหน่ง (ไม่นับจุดพัก Staging)
+function locUsage() {
+  const wf = whFilter();
+  return DB.locations.filter(l => l.type !== 'Staging' && (!wf || l.wh === wf)).map(l => {
+    const used = DB.stock.filter(s => s.wh === l.wh && s.loc === l.code).reduce((a,s) => a + s.qty, 0);
+    const pct = l.cap ? Math.round(used / l.cap * 100) : 0;
+    const status = used === 0 ? 'ว่าง' : used >= l.cap ? 'เต็ม' : 'ใช้งานบางส่วน';
+    return { ...l, used, pct, status };
+  });
+}
+// โซน/ชั้นวางที่แนะนำสำหรับการจัดเก็บตามกติกา
+const RULE_PUTAWAY = {
+  FIFO: { type:'Flow Rack', hint:'เติมด้านหลัง หยิบด้านหน้า (Flow Rack)' },
+  FEFO: { type:null,        hint:'หันป้ายวันหมดอายุออกด้านหน้า แบ่งช่องตามเดือนหมดอายุ' },
+  LIFO: { type:'Drive-in',  hint:'จัดเก็บซ้อนทับได้ (Drive-in Rack)' },
+};
+function removeStock(sku, wh, loc, lot, qty) {
+  const row = DB.stock.find(s => s.sku===sku && s.wh===wh && s.loc===loc && (!lot || s.lot===lot));
+  if (!row || row.qty < qty) return false;
+  row.qty -= qty;
+  if (row.qty === 0) DB.stock.splice(DB.stock.indexOf(row), 1);
+  return true;
+}
+function toast(msg) {
+  $('toast-msg').textContent = msg;
+  $('toast').classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => $('toast').classList.remove('show'), 2600);
+}
+
+// ---------- Navigation ----------
+const PAGE_META = {
+  dashboard:['แดชบอร์ด','ภาพรวมคลังสินค้า'],
+  inbound:['รับสินค้า (ASN / Received / QC)','Inbound Management / ขั้นตอน ①–③'],
+  putaway:['Putaway — จัดเก็บสินค้า','Inbound Management / ขั้นตอน ④'],
+  picking:['Delivery Order / Picking / Packing','Outbound Management / ขั้นตอน ⑥–⑨'],
+  shipping:['Shipping — ส่งสินค้า','Outbound Management / ขั้นตอน ⑩'],
+  stock:['ภาพรวมสต๊อก (Stock by Location)','Inventory Management / ขั้นตอน ⑤'],
+  relocation:['Re-Location — ย้ายสต๊อก','Inventory Management'],
+  adjustment:['Adjustment Stock — ปรับยอดสต๊อก','Inventory Management'],
+  reports:['รายงาน','Report & Analyst'],
+  settings:['ตั้งค่า','Setting / ข้อมูลหลักและผู้ใช้งาน'],
+};
+const INBOUND_TAB_TITLES = {
+  '':['Prepare ASN — เตรียมข้อมูลล่วงหน้า','Inbound Management / ขั้นตอน ①'],
+  'รอรับ':['Receive Goods — รับสินค้าเข้าคลัง','Inbound Management / ขั้นตอน ②'],
+  'รอตรวจสอบ':['Inspection — ตรวจรับสินค้า','Inbound Management / ขั้นตอน ③'],
+};
+const OUTBOUND_TAB_TITLES = {
+  '':['Delivery Order — ใบสั่งสินค้า','Outbound Management / ขั้นตอน ⑥'],
+  'รอจัด,กำลังจัด':['Picking — หยิบสินค้า','Outbound Management / ขั้นตอน ⑦'],
+  'จัดครบแล้ว':['Packing — บรรจุสินค้า','Outbound Management / ขั้นตอน ⑧'],
+  'แพ็คแล้ว':['Inspection — ตรวจก่อนจ่ายสินค้า','Outbound Management / ขั้นตอน ⑨'],
+};
+let inboundTab = '';
+let outboundTab = '';
+const SETTING_TAB_TITLES = {
+  'set-products':'Product — ข้อมูลสินค้า', 'set-units':'Unit of Measure — หน่วยสินค้า',
+  'set-locations':'Location — ตำแหน่งจัดเก็บ', 'set-zones':'Zone — โซนจัดเก็บ',
+  'set-wh':'Warehouse — คลังสินค้า', 'set-users':'User — ผู้ใช้งานระบบ',
+  'set-customers':'Customer — ลูกค้า', 'set-vendors':'Vendor — ผู้ขาย/ผู้ผลิต',
+};
+const REPORT_TITLES = {
+  'rp-stock':'รายงานสต๊อกสินค้าคงคลัง',
+  'rp-move':'รายงาน Stock Movement',
+  'rp-space':'รายงานการใช้พื้นที่คลัง แยกตาม Zone / Rack',
+  'rp-avail':'รายงานพื้นที่ว่างและพื้นที่เต็ม',
+  'rp-comply':'รายงานสินค้าไม่เป็นไปตาม Storage Rule',
+  'rp-availinv':'Available Inventory — จำนวนที่ขาย/เบิกได้',
+  'rp-invstatus':'Inventory Status — สถานะสต๊อก',
+  'rp-quarantine':'Quarantine — สินค้าที่ถูกกักกัน',
+  'rp-stockcard':'Stock Card — ประวัติเข้า-ออกราย SKU',
+  'rp-aging':'Inventory Aging — อายุสินค้าคงคลัง',
+  'rp-slow':'Slow-moving / Non-moving',
+  'rp-minmax':'Minimum–Maximum Stock',
+  'rp-negative':'Negative Inventory — สต๊อกติดลบ',
+  'rp-valuation':'Inventory Valuation — มูลค่าสินค้าคงคลัง',
+  'rp-lot':'Lot / Serial Balance',
+  'rp-expiry':'Expiry Report — สินค้าใกล้หมดอายุ/หมดอายุ',
+  'rp-summary':'สรุปกิจกรรมคลัง',
+};
+const REPORT_IDS = Object.keys(REPORT_TITLES);
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const page = btn.dataset.page;
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    $('page-' + page).classList.add('active');
+    if (btn.dataset.rtab) {
+      showReportCard(btn.dataset.rtab);
+      $('page-title').textContent = REPORT_TITLES[btn.dataset.rtab];
+      $('page-crumb').textContent = 'Report / ' + REPORT_TITLES[btn.dataset.rtab];
+    } else if (btn.dataset.stab) {
+      switchSettingTab(btn.dataset.stab);
+      $('page-title').textContent = SETTING_TAB_TITLES[btn.dataset.stab] || PAGE_META[page][0];
+      $('page-crumb').textContent = 'Setting / ' + (SETTING_TAB_TITLES[btn.dataset.stab] || '');
+    } else if (page === 'inbound' && btn.dataset.itab !== undefined) {
+      inboundTab = btn.dataset.itab;
+      renderInbound();
+      $('page-title').textContent = INBOUND_TAB_TITLES[inboundTab][0];
+      $('page-crumb').textContent = INBOUND_TAB_TITLES[inboundTab][1];
+    } else if (page === 'picking' && btn.dataset.otab !== undefined) {
+      outboundTab = btn.dataset.otab;
+      renderPicking();
+      $('page-title').textContent = OUTBOUND_TAB_TITLES[outboundTab][0];
+      $('page-crumb').textContent = OUTBOUND_TAB_TITLES[outboundTab][1];
+    } else {
+      $('page-title').textContent = PAGE_META[page][0];
+      $('page-crumb').textContent = PAGE_META[page][1];
+      if (page === 'relocation') renderRelocation();
+      if (page === 'adjustment') renderAdjustment();
+    }
+  });
+});
+
+// ---------- Dashboard ----------
+// ---------- Workflow diagram (Inbound ①-⑤ / Outbound ⑥-⑩) ----------
+const WF_STEPS = [
+  { n:1,  key:'asn',     title:'Prepare ASN Data', sub:'เตรียมข้อมูลล่วงหน้า' },
+  { n:2,  key:'recv',    title:'Received Goods',   sub:'รับสินค้าเข้าคลัง' },
+  { n:3,  key:'qcin',    title:'Inspection',       sub:'ตรวจรับสินค้า' },
+  { n:4,  key:'putaway', title:'Put Away',         sub:'จัดเก็บเข้าตำแหน่ง' },
+  { n:5,  key:'stock',   title:'Stock Management', sub:'บริหารจัดการสต๊อก' },
+  { n:6,  key:'do',      title:'Delivery Order',   sub:'ใบสั่งส่งสินค้า' },
+  { n:7,  key:'pick',    title:'Picking',          sub:'หยิบสินค้า' },
+  { n:8,  key:'pack',    title:'Packing',          sub:'บรรจุสินค้า' },
+  { n:9,  key:'qcout',   title:'Inspection',       sub:'ตรวจสอบก่อนจ่าย' },
+  { n:10, key:'ship',    title:'Shipping',         sub:'จัดส่งสินค้า' },
+];
+const WF_ORDER = WF_STEPS.map(s => s.key);
+// งานค้างจริงต่อขั้นตอน — ใช้หาว่าขั้นตอนไหนคือ "ขั้นตอนปัจจุบัน" (ขั้นแรกสุดในลำดับที่ยังมีงานค้าง)
+function workflowBacklog() {
+  return {
+    asn: 0, recv: DB.grns.filter(g => g.status==='รอรับ').length,
+    qcin: DB.grns.filter(g => g.status==='รอตรวจสอบ').length,
+    putaway: DB.putaway.filter(t => t.status==='รอจัดเก็บ').length,
+    stock: 0, do: 0,
+    pick: DB.orders.filter(o => ['รอจัด','กำลังจัด'].includes(o.status)).length,
+    pack: DB.orders.filter(o => o.status==='จัดครบแล้ว').length,
+    qcout: DB.orders.filter(o => o.status==='แพ็คแล้ว').length,
+    ship: DB.orders.filter(o => o.status==='พร้อมส่ง').length,
+  };
+}
+// ยอดกิจกรรมสะสมต่อขั้นตอน — ตัวเลขสีเขียว/ส้มที่แสดงในการ์ด
+function workflowMetrics() {
+  const inspectedLines = DB.grns.reduce((a,g) => a + g.items.filter(it => it.passed != null).length, 0);
+  const pickedLines = DB.orders.reduce((a,o) => a + o.items.filter(it => it.picked > 0).length, 0);
+  const cartonsPacked = DB.orders.reduce((a,o) => a + (o.cartons ? o.cartons.length : 0), 0);
+  return {
+    asn:     { value: DB.grns.length, unit:'รายการ' },
+    recv:    { value: DB.grns.filter(g => g.status!=='รอรับ').length, unit:'คัน' },
+    qcin:    { value: inspectedLines, unit:'พาเลท' },
+    putaway: { value: DB.putaway.filter(t => t.status==='จัดเก็บแล้ว').length, unit:'งาน' },
+    stock:   { value: new Set(DB.stock.map(s => s.sku)).size, unit:'SKU' },
+    do:      { value: DB.orders.length, unit:'ใบ' },
+    pick:    { value: pickedLines, unit:'งาน' },
+    pack:    { value: cartonsPacked, unit:'งาน' },
+    qcout:   { value: DB.orders.filter(o => o.qc).length, unit:'งาน' },
+    ship:    { value: DB.shipments.length, unit:'เที่ยว' },
+  };
+}
+function renderWorkflowDiagram() {
+  const bl = workflowBacklog();
+  const metrics = workflowMetrics();
+  const currentKey = WF_ORDER.find(k => bl[k] > 0) || null; // null = ทุกขั้นตอนโล่ง ไม่มีคิวค้าง
+
+  const cardHtml = s => {
+    const isCurrent = s.key === currentKey;
+    const m = metrics[s.key];
+    return `<div class="wf-card ${isCurrent ? 'wf-current' : ''}">
+      <div class="wf-head"><div class="wf-num">${s.n}</div><div class="wf-title">${s.title}</div></div>
+      <div class="wf-sub">${s.sub}</div>
+      <div class="wf-metric">${fmt(m.value)}<span class="wf-unit">${m.unit}</span></div>
+    </div>`;
+  };
+  const arrowHtml = () => `<div class="wf-arrow"></div>`;
+
+  const row1 = WF_STEPS.slice(0, 5);                                   // 1→5 ซ้ายไปขวา
+  const row2 = [WF_STEPS[9], WF_STEPS[8], WF_STEPS[7], WF_STEPS[6], WF_STEPS[5]]; // 10,9,8,7,6 (ไหลขวาไปซ้าย = 6→7→8→9→10)
+
+  const row1Html = row1.map((s,i) => cardHtml(s) + (i < row1.length-1 ? arrowHtml() : '')).join('');
+  const row2Html = row2.map((s,i) => cardHtml(s) + (i < row2.length-1 ? arrowHtml() : '')).join('');
+  const connectorHtml = row1.map((s,i) =>
+    `<div class="wf-card wf-ghost">${i===row1.length-1 ? '<div class="wf-down-connector">⋮</div>' : ''}</div>`
+    + (i < row1.length-1 ? '<div class="wf-arrow"></div>' : '')
+  ).join('');
+
+  $('wf-diagram').innerHTML = `
+    <div class="wf-row">${row1Html}</div>
+    <div class="wf-connector">${connectorHtml}</div>
+    <div class="wf-row">${row2Html}</div>`;
+}
+
+// รายละเอียด Flow ขาเข้า (แสดงบนหน้า Inbound และ Putaway) — 4 ขั้นตอนตามที่กำหนด
+const INBOUND_SUB_STEPS = [
+  { n:1, key:'asn',     title:'Prepare ASN',   sub:'เตรียมข้อมูลล่วงหน้า' },
+  { n:2, key:'recv',    title:'Receive Goods', sub:'รับสินค้าเข้าคลัง' },
+  { n:3, key:'qcin',    title:'Inspection',    sub:'ตรวจรับสินค้า' },
+  { n:4, key:'putaway', title:'Putaway',       sub:'จัดเก็บเข้าตำแหน่ง' },
+];
+function renderInboundFlow() {
+  const bl = workflowBacklog();
+  const metrics = workflowMetrics();
+  const keys = INBOUND_SUB_STEPS.map(s => s.key);
+  const currentKey = keys.find(k => bl[k] > 0) || null;
+
+  const cardHtml = s => {
+    const isCurrent = s.key === currentKey;
+    const m = metrics[s.key];
+    return `<div class="wf-card ${isCurrent ? 'wf-current' : ''}">
+      <div class="wf-head"><div class="wf-num">${s.n}</div><div class="wf-title">${s.title}</div></div>
+      <div class="wf-sub">${s.sub}</div>
+      <div class="wf-metric">${fmt(m.value)}<span class="wf-unit">${m.unit}</span></div>
+    </div>`;
+  };
+  const rowHtml = INBOUND_SUB_STEPS.map((s,i) => cardHtml(s) + (i < INBOUND_SUB_STEPS.length-1 ? '<div class="wf-arrow"></div>' : '')).join('');
+  document.querySelectorAll('.wf-diagram-sm').forEach(el => el.innerHTML = `<div class="wf-row">${rowHtml}</div>`);
+}
+function renderDashboard() {
+  renderWorkflowDiagram();
+  const wf = whFilter();
+  const stock = DB.stock.filter(s => !wf || s.wh === wf);
+  $('kpi-sku').textContent = fmt(new Set(stock.map(s => s.sku)).size);
+  $('kpi-stock').textContent = fmt(stock.reduce((a,s) => a + s.qty, 0));
+  const pendingIn = DB.grns.filter(g => ['รอรับ','รอตรวจสอบ'].includes(g.status)).length
+                  + DB.putaway.filter(t => t.status==='รอจัดเก็บ').length;
+  $('kpi-inbound').textContent = fmt(pendingIn);
+  const pendingPk = DB.orders.filter(o => ['รอจัด','กำลังจัด','จัดครบแล้ว','แพ็คแล้ว','พร้อมส่ง'].includes(o.status)).length;
+  $('kpi-orders').textContent = fmt(pendingPk);
+
+  const lows = DB.products.filter(p => totalQty(p.sku, wf) < p.min);
+  $('kpi-low').textContent = fmt(lows.length);
+
+  // งานที่ต้องทำ
+  const tasks = [];
+  DB.grns.filter(g => g.status==='รอรับ').forEach(g =>
+    tasks.push(['② รับสินค้า', g.id, g.supplier + ' · ' + g.items.length + ' รายการ', '<span class="badge b-amber"><span class="dot"></span> รอรับ</span>']));
+  DB.grns.filter(g => g.status==='รอตรวจสอบ').forEach(g =>
+    tasks.push(['③ ตรวจสอบ QC', g.id, g.supplier, '<span class="badge b-purple"><span class="dot"></span> รอตรวจสอบ</span>']));
+  DB.putaway.filter(t => t.status==='รอจัดเก็บ').forEach(t =>
+    tasks.push(['④ จัดเก็บ', t.id, prod(t.sku).name + ' × ' + fmt(t.qty), '<span class="badge b-purple"><span class="dot"></span> รอจัดเก็บ</span>']));
+  DB.orders.filter(o => o.status==='รอจัด' || o.status==='กำลังจัด').forEach(o =>
+    tasks.push(['⑦ หยิบสินค้า', o.id, o.customer, '<span class="badge b-blue"><span class="dot"></span> ' + o.status + '</span>']));
+  DB.orders.filter(o => o.status==='จัดครบแล้ว').forEach(o =>
+    tasks.push(['⑧ แพ็คสินค้า', o.id, o.customer, '<span class="badge b-purple"><span class="dot"></span> รอแพ็ค</span>']));
+  DB.orders.filter(o => o.status==='แพ็คแล้ว').forEach(o =>
+    tasks.push(['⑨ ตรวจก่อนส่ง', o.id, o.customer, '<span class="badge b-blue"><span class="dot"></span> รอตรวจสอบ</span>']));
+  DB.orders.filter(o => o.status==='พร้อมส่ง').forEach(o =>
+    tasks.push(['⑩ จัดส่ง', o.id, o.customer, '<span class="badge b-green"><span class="dot"></span> พร้อมส่ง</span>']));
+  $('dash-tasks').innerHTML = tasks.length
+    ? tasks.map(t => `<tr><td>${t[0]}</td><td class="mono">${t[1]}</td><td>${t[2]}</td><td>${t[3]}</td></tr>`).join('')
+    : '<tr class="empty-row"><td colspan="4">🎉 ไม่มีงานค้าง</td></tr>';
+
+  $('dash-low').innerHTML = lows.length
+    ? lows.map(p => `<tr><td class="mono">${p.sku}</td><td>${p.name}</td><td class="num qty-warn">${fmt(totalQty(p.sku, wf))}</td><td class="num">${fmt(p.min)}</td></tr>`).join('')
+    : '<tr class="empty-row"><td colspan="4">✅ สต๊อกทุกรายการอยู่ในเกณฑ์</td></tr>';
+
+  $('dash-moves').innerHTML = DB.moves.slice(0,8).map(m => `
+    <tr><td class="mono">${m.ts}</td><td>${moveBadge(m.type)}</td><td class="mono">${m.sku}</td>
+    <td class="num">${fmt(m.qty)}</td><td>${locChip(m.from)}</td><td>${locChip(m.to)}</td><td class="mono">${m.ref}</td></tr>`).join('');
+}
+function moveBadge(t) {
+  const map = { 'รับเข้า':'b-green', 'จัดเก็บ':'b-purple', 'เบิกออก':'b-blue', 'ส่งออก':'b-amber', 'ย้าย':'b-gray', 'ปรับยอด':'b-red', 'ตีกลับ':'b-red' };
+  return `<span class="badge ${map[t]||'b-gray'}">${t}</span>`;
+}
+function locChip(l) {
+  if (!l || l==='ผู้ขาย' || l==='ลูกค้า' || l==='-') return `<span style="color:var(--muted)">${l||'—'}</span>`;
+  return `<span class="loc-chip">${l}</span>`;
+}
+
+// ---------- Inbound ----------
+function grnStatusBadge(s) {
+  return { 'รอรับ':'<span class="badge b-amber"><span class="dot"></span> ① รอรับ (ASN)</span>',
+           'รอตรวจสอบ':'<span class="badge b-purple"><span class="dot"></span> ③ รอตรวจสอบ QC</span>',
+           'รับเข้าแล้ว':'<span class="badge b-blue"><span class="dot"></span> ④ ผ่านตรวจ รอจัดเก็บ</span>',
+           'จัดเก็บแล้ว':'<span class="badge b-green"><span class="dot"></span> ✓ จัดเก็บแล้ว</span>' }[s] || s;
+}
+function renderInbound(q='') {
+  q = q.toLowerCase();
+  const rows = DB.grns
+    .filter(g => !whFilter() || g.wh === whFilter())
+    .filter(g => !inboundTab || g.status === inboundTab)
+    .filter(g => !q || g.id.toLowerCase().includes(q) || g.po.toLowerCase().includes(q) || g.supplier.toLowerCase().includes(q));
+  $('tbl-inbound').innerHTML = rows.length ? rows.map(g => `
+    <tr>
+      <td class="mono">${g.id}</td><td class="mono">${g.po}</td><td>${g.supplier}</td>
+      <td>${g.wh}</td><td>${g.date}</td><td class="num">${g.items.length}</td>
+      <td>${grnStatusBadge(g.status)}</td>
+      <td style="text-align:right; white-space:nowrap">
+        ${g.status==='รอรับ' ? `<button class="btn btn-success btn-sm" onclick="openReceiveModal('${g.id}')">✓ ตรวจรับ</button>` : ''}
+        ${g.status==='รอตรวจสอบ' ? `<button class="btn btn-primary btn-sm" onclick="openInspectModal('${g.id}')">🔍 ตรวจสอบ QC</button>` : ''}
+        <button class="btn btn-outline btn-sm" onclick="viewGrn('${g.id}')">ดู</button>
+      </td>
+    </tr>`).join('') : '<tr class="empty-row"><td colspan="8">ไม่พบใบรับสินค้า</td></tr>';
+  const n = DB.grns.filter(g => ['รอรับ','รอตรวจสอบ'].includes(g.status)).length;
+  $('nav-inbound-n').textContent = n || '';
+  $('nav-inbound-n').style.display = n ? '' : 'none';
+}
+
+function openGrnModal() {
+  openModal('① สร้าง ASN (Advance Shipping Notice)', `
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="field"><label>อ้างอิงใบสั่งซื้อ (PO)</label><input id="f-po" placeholder="PO-xxxx-xxx"></div>
+      <div class="field"><label>ผู้ขาย / ที่มา</label><input id="f-supplier" placeholder="ชื่อผู้ขาย"></div>
+      <div class="field"><label>คลังปลายทาง</label><select id="f-wh">${DB.warehouses.map(w=>`<option value="${w.code}">${w.code} — ${w.name}</option>`).join('')}</select></div>
+      <div class="field"><label>วันที่คาดว่าจะรับ</label><input type="date" id="f-date" value="${today()}"></div>
+    </div>
+    <label>รายการสินค้า</label>
+    <div id="grn-lines"></div>
+    <button class="btn btn-outline btn-sm" onclick="addGrnLine()">＋ เพิ่มรายการ</button>
+  `, `<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveGrn()">บันทึกใบรับ</button>`, true);
+  addGrnLine();
+}
+function addGrnLine() {
+  const div = document.createElement('div');
+  div.className = 'form-grid';
+  div.style.cssText = 'margin-bottom:4px; grid-template-columns:2fr 1fr 1fr auto; align-items:start;';
+  const firstSku = DB.products[0]?.sku || '';
+  div.innerHTML = `
+    <select class="ln-sku" onchange="refreshLineUom(this)">${DB.products.map(p=>`<option value="${p.sku}">${p.sku} — ${p.name}</option>`).join('')}</select>
+    <div><input type="number" class="ln-qty" min="1" value="1" placeholder="จำนวน" oninput="refreshLineHint(this)"><div class="hint ln-hint"></div></div>
+    <select class="ln-uom" onchange="refreshLineHint(this)">${uomOptionsHtml(firstSku, prod(firstSku).unit)}</select>
+    <button class="btn btn-danger-o btn-sm" onclick="this.parentElement.remove()">🗑</button>`;
+  $('grn-lines').appendChild(div);
+  refreshLineHint(div.querySelector('.ln-qty'));
+}
+function saveGrn() {
+  const po = $('f-po').value.trim(), sup = $('f-supplier').value.trim();
+  if (!po || !sup) return toast('⚠️ กรุณากรอก PO และผู้ขาย');
+  const items = [...document.querySelectorAll('#grn-lines > div')].map(d => {
+    const sku = d.querySelector('.ln-sku').value;
+    const uom = d.querySelector('.ln-uom').value;
+    const qty = +d.querySelector('.ln-qty').value || 0;
+    const factor = uomFactor(sku, uom) || 1;
+    return { sku, expect: +(qty * factor).toFixed(3), received: 0 };
+  }).filter(i => i.expect > 0);
+  if (!items.length) return toast('⚠️ กรุณาเพิ่มรายการสินค้า');
+  const id = `ASN-2607-${pad3(seq.grn++)}`;
+  DB.grns.unshift({ id, po, supplier:sup, wh:$('f-wh').value, date:$('f-date').value, status:'รอรับ', items });
+  closeModal(); renderAll(); toast(`สร้าง ASN ${id} แล้ว — รอตรวจรับสินค้า`);
+}
+
+function openReceiveModal(id) {
+  const g = DB.grns.find(x => x.id === id);
+  openModal(`② ตรวจรับสินค้า (Received Goods) — ${g.id}`, `
+    <div class="steps">
+      <div class="step done"><span class="n">1</span> ASN</div><span class="step-arrow">→</span>
+      <div class="step now"><span class="n">2</span> รับสินค้า</div><span class="step-arrow">→</span>
+      <div class="step"><span class="n">3</span> ตรวจสอบ QC</div><span class="step-arrow">→</span>
+      <div class="step"><span class="n">4</span> จัดเก็บ</div>
+    </div>
+    <p style="font-size:.84rem;color:var(--muted);margin-bottom:12px">ตรวจนับสินค้าจริงเทียบกับ ASN แล้วกรอก "จำนวนรับจริง" สินค้าจะเข้าพักที่จุดรับ RECV เพื่อรอตรวจสอบคุณภาพ</p>
+    <table>
+      <thead><tr><th>SKU</th><th>สินค้า</th><th>กติกา</th><th class="num">ตามเอกสาร</th><th style="width:110px">รับจริง</th><th style="width:110px">Lot</th><th style="width:150px">วันหมดอายุ (EXP)</th></tr></thead>
+      <tbody>${g.items.map((it,i) => `
+        <tr><td class="mono">${it.sku}</td><td>${prod(it.sku).name}</td><td>${ruleBadge(ruleOf(it.sku))}</td><td class="num">${fmt(it.expect)}</td>
+        <td><input type="number" id="rcv-${i}" min="0" value="${it.expect}"></td>
+        <td><input id="lot-${i}" placeholder="-" value="-"></td>
+        <td><input type="date" id="exp-${i}" ${ruleOf(it.sku)!=='FEFO' ? 'placeholder="-"' : ''}>${ruleOf(it.sku)==='FEFO' ? '<div class="hint">FEFO — ต้องระบุ</div>' : ''}</td></tr>`).join('')}
+      </tbody>
+    </table>
+  `, `<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-success" onclick="confirmReceive('${g.id}')">✓ ยืนยันรับเข้า</button>`, true);
+}
+function confirmReceive(id) {
+  const g = DB.grns.find(x => x.id === id);
+  const recvLoc = 'RECV-01';
+  for (let i = 0; i < g.items.length; i++) {
+    const it = g.items[i];
+    const exp = $('exp-'+i).value;
+    if (ruleOf(it.sku) === 'FEFO' && (+$('rcv-'+i).value || 0) > 0 && !exp)
+      return toast(`⚠️ ${it.sku} เป็นสินค้า FEFO — ต้องระบุวันหมดอายุ`);
+    it.exp = exp || undefined;
+  }
+  g.items.forEach((it, i) => {
+    it.received = +$('rcv-'+i).value || 0;
+    it.lot = ($('lot-'+i).value || '-').trim() || '-';
+    if (it.received > 0) {
+      addStock(it.sku, g.wh, recvLoc, it.lot, it.received, it.exp, today());
+      logMove('รับเข้า', it.sku, it.received, 'ผู้ขาย', recvLoc, g.id);
+    }
+  });
+  g.status = 'รอตรวจสอบ';
+  closeModal(); renderAll();
+  toast(`รับสินค้า ${g.id} เข้าจุดพัก RECV แล้ว — รอตรวจสอบคุณภาพ (QC)`);
+}
+
+function openInspectModal(id) {
+  const g = DB.grns.find(x => x.id === id);
+  const items = g.items.filter(it => it.received > 0);
+  openModal(`③ ตรวจสอบคุณภาพรับเข้า (Inspection) — ${g.id}`, `
+    <div class="steps">
+      <div class="step done"><span class="n">1</span> ASN</div><span class="step-arrow">→</span>
+      <div class="step done"><span class="n">2</span> รับสินค้า</div><span class="step-arrow">→</span>
+      <div class="step now"><span class="n">3</span> ตรวจสอบ QC</div><span class="step-arrow">→</span>
+      <div class="step"><span class="n">4</span> จัดเก็บ</div>
+    </div>
+    <p style="font-size:.84rem;color:var(--muted);margin-bottom:12px">ตรวจสภาพสินค้า กรอก "จำนวนผ่าน QC" — ส่วนต่างจะถูกตีกลับผู้ขายและตัดออกจากจุดพัก RECV เฉพาะจำนวนที่ผ่านจึงสร้างงานจัดเก็บ</p>
+    <table>
+      <thead><tr><th>SKU</th><th>สินค้า</th><th>Lot</th><th class="num">รับจริง</th><th style="width:120px">ผ่าน QC</th><th style="width:170px">เหตุผลที่ตีกลับ</th></tr></thead>
+      <tbody>${items.map((it,i) => `
+        <tr><td class="mono">${it.sku}</td><td>${prod(it.sku).name}</td><td class="mono">${it.lot}</td>
+        <td class="num">${fmt(it.received)}</td>
+        <td><input type="number" id="qc-${i}" min="0" max="${it.received}" value="${it.received}"></td>
+        <td><select id="qc-rs-${i}"><option>ชำรุด/เสียหาย</option><option>ผิดสเปค</option><option>หมดอายุ/ใกล้หมดอายุ</option><option>บรรจุภัณฑ์ไม่สมบูรณ์</option></select></td></tr>`).join('')}
+      </tbody>
+    </table>
+  `, `<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-success" onclick="confirmInspect('${g.id}')">✓ ยืนยันผลตรวจสอบ</button>`, true);
+}
+function confirmInspect(id) {
+  const g = DB.grns.find(x => x.id === id);
+  const recvLoc = 'RECV-01';
+  const items = g.items.filter(it => it.received > 0);
+  let rejectedTotal = 0;
+  items.forEach((it, i) => {
+    const pass = Math.min(+$('qc-'+i).value || 0, it.received);
+    const reject = it.received - pass;
+    it.passed = pass; it.rejected = reject;
+    if (reject > 0) {
+      removeStock(it.sku, g.wh, recvLoc, it.lot, reject);
+      logMove('ตีกลับ', it.sku, reject, recvLoc, 'ผู้ขาย (' + $('qc-rs-'+i).value + ')', g.id);
+      rejectedTotal += reject;
+    }
+    if (pass > 0) {
+      DB.putaway.push({ id:`PT-${pad3(seq.pt++)}`, grn:g.id, sku:it.sku, lot:it.lot, exp:it.exp, qty:pass, wh:g.wh, from:recvLoc, to:'', status:'รอจัดเก็บ' });
+    }
+  });
+  g.status = items.some(it => it.passed > 0) ? 'รับเข้าแล้ว' : 'จัดเก็บแล้ว';
+  closeModal(); renderAll();
+  toast(rejectedTotal > 0
+    ? `ตรวจสอบ ${g.id} แล้ว — ตีกลับ ${fmt(rejectedTotal)} หน่วย ส่วนที่ผ่านสร้างงานจัดเก็บแล้ว`
+    : `ตรวจสอบ ${g.id} ผ่านทั้งหมด — สร้างงานจัดเก็บอัตโนมัติ`);
+}
+function viewGrn(id) {
+  const g = DB.grns.find(x => x.id === id);
+  openModal(`รายละเอียด ${g.id}`, `
+    <div class="form-grid" style="margin-bottom:14px">
+      <div><label>อ้างอิง PO</label><div class="mono">${g.po}</div></div>
+      <div><label>ผู้ขาย</label><div>${g.supplier}</div></div>
+      <div><label>คลัง</label><div>${g.wh} — ${whName(g.wh)}</div></div>
+      <div><label>สถานะ</label><div>${grnStatusBadge(g.status)}</div></div>
+    </div>
+    <table>
+      <thead><tr><th>SKU</th><th>สินค้า</th><th class="num">ตามเอกสาร</th><th class="num">รับจริง</th><th class="num">ผ่าน QC</th><th class="num">ตีกลับ</th></tr></thead>
+      <tbody>${g.items.map(it => `
+        <tr><td class="mono">${it.sku}</td><td>${prod(it.sku).name}</td>
+          <td class="num">${fmt(it.expect)}</td><td class="num">${fmt(it.received||0)}</td>
+          <td class="num">${it.passed!=null ? fmt(it.passed) : '—'}</td>
+          <td class="num ${it.rejected>0?'qty-warn':''}">${it.rejected!=null ? fmt(it.rejected) : '—'}</td></tr>`).join('')}</tbody>
+    </table>
+  `, `<button class="btn btn-outline" onclick="closeModal()">ปิด</button>`);
+}
+
+// ---------- Putaway ----------
+function renderPutaway() {
+  const rows = DB.putaway.filter(t => !whFilter() || t.wh === whFilter());
+  const pending = rows.filter(t => t.status === 'รอจัดเก็บ');
+  $('putaway-count-badge').textContent = `ค้างจัดเก็บ ${pending.length} งาน`;
+  $('tbl-putaway').innerHTML = rows.length ? rows.map(t => {
+    const rule = ruleOf(t.sku);
+    const pref = RULE_PUTAWAY[rule];
+    // เรียง location: Storage Rule (Hazmat/Cold) สำคัญสุด > ประเภทตรงกติกาหยิบ > อื่น ๆ (ติด ★ เมื่อเข้าเงื่อนไข)
+    const needType = STORAGE_META[storageOf(t.sku)].locType;
+    const score = l => (needType && l.type === needType ? 2 : 0) + (pref.type && l.type === pref.type ? 1 : 0);
+    const locs = DB.locations
+      .filter(l => l.wh === t.wh && !['Staging'].includes(l.type))
+      .sort((a,b) => score(b) - score(a));
+    const hintText = (needType ? `⚠️ ${STORAGE_META[storageOf(t.sku)].label} — ต้องเก็บในพื้นที่ ${needType} · ` : '') + pref.hint;
+    return `<tr>
+      <td class="mono">${t.id}</td><td class="mono">${t.grn}</td><td class="mono">${t.sku}</td>
+      <td>${prod(t.sku).name}</td><td>${ruleBadge(rule)}</td>
+      <td class="mono">${t.exp || '—'}</td>
+      <td class="num">${fmt(t.qty)}</td><td>${locChip(t.from)}</td>
+      <td>${t.status==='รอจัดเก็บ'
+          ? `<select id="pt-loc-${t.id}" style="width:190px">${locs.map(l=>
+              `<option value="${l.code}">${score(l)>0?'★ ':''}${l.code} (${l.type})</option>`).join('')}</select>
+             <div class="hint">${hintText}</div>`
+          : locChip(t.to)}</td>
+      <td>${t.status==='รอจัดเก็บ' ? '<span class="badge b-amber"><span class="dot"></span> รอจัดเก็บ</span>' : '<span class="badge b-green"><span class="dot"></span> จัดเก็บแล้ว</span>'}</td>
+      <td style="text-align:right">${t.status==='รอจัดเก็บ' ? `<button class="btn btn-success btn-sm" onclick="confirmPutaway('${t.id}')">✓ ยืนยันจัดเก็บ</button>` : ''}</td>
+    </tr>`;
+  }).join('') : '<tr class="empty-row"><td colspan="11">ไม่มีงานจัดเก็บ — รับสินค้าเข้าก่อนเพื่อสร้างงาน</td></tr>';
+  const n = DB.putaway.filter(t => t.status==='รอจัดเก็บ').length;
+  $('nav-putaway-n').textContent = n || '';
+  $('nav-putaway-n').style.display = n ? '' : 'none';
+}
+function confirmPutaway(id) {
+  const t = DB.putaway.find(x => x.id === id);
+  const to = $('pt-loc-' + id).value;
+  // เก็บวันรับเข้าเดิมจากจุดพักไว้ เพื่อให้ FIFO/LIFO เรียงถูกต้องหลังย้าย
+  const src = DB.stock.find(s => s.sku===t.sku && s.wh===t.wh && s.loc===t.from && s.lot===(t.lot||'-'));
+  const inDate = (src && src.inDate) || today();
+  if (!removeStock(t.sku, t.wh, t.from, t.lot, t.qty)) return toast('⚠️ สต๊อกที่จุดพักไม่พอ');
+  addStock(t.sku, t.wh, to, t.lot || '-', t.qty, t.exp, inDate);
+  t.to = to; t.status = 'จัดเก็บแล้ว';
+  logMove('จัดเก็บ', t.sku, t.qty, t.from, to, t.grn);
+  const g = DB.grns.find(x => x.id === t.grn);
+  if (g && DB.putaway.filter(p => p.grn === g.id).every(p => p.status === 'จัดเก็บแล้ว')) g.status = 'จัดเก็บแล้ว';
+  renderAll(); toast(`จัดเก็บ ${t.sku} → ${to} เรียบร้อย`);
+}
+
+// ---------- Stock ----------
+function renderStock(q='') {
+  q = q.toLowerCase();
+  const wf = whFilter();
+  const rows = DB.stock
+    .filter(s => !wf || s.wh === wf)
+    .filter(s => !q || s.sku.toLowerCase().includes(q) || prod(s.sku).name.toLowerCase().includes(q) || s.loc.toLowerCase().includes(q))
+    .sort((a,b) => a.sku.localeCompare(b.sku) || a.loc.localeCompare(b.loc));
+  const soon = new Date(Date.now() + 90*24*3600*1000).toISOString().slice(0,10); // ใกล้หมดอายุใน 90 วัน
+  $('tbl-stock').innerHTML = rows.length ? rows.map(s => {
+    const p = prod(s.sku);
+    const zone = (DB.locations.find(l => l.code===s.loc && l.wh===s.wh) || {}).zone || '-';
+    const low = totalQty(s.sku, wf) < p.min;
+    const nearExp = s.exp && s.exp <= soon;
+    return `<tr>
+      <td class="mono">${s.sku}</td><td>${p.name}</td><td>${ruleBadge(ruleOf(s.sku))}</td><td class="mono">${s.lot}</td>
+      <td class="mono">${s.inDate || '—'}</td>
+      <td class="mono ${nearExp ? 'qty-warn' : ''}">${s.exp || '—'}${nearExp ? ' ⚠️' : ''}</td>
+      <td>${s.wh}</td><td>${zone}</td><td>${locChip(s.loc)}</td>
+      <td class="num" style="font-weight:700">${fmt(s.qty)}</td><td>${unitName(p.unit)}</td>
+      <td>${(s.status || 'AVAILABLE') !== 'AVAILABLE' ? invStatusBadge(s.status)
+          : low ? '<span class="badge b-red"><span class="dot"></span> ต่ำกว่าจุดสั่งซื้อ</span>' : '<span class="badge b-green"><span class="dot"></span> ปกติ</span>'}</td>
+    </tr>`;
+  }).join('') : '<tr class="empty-row"><td colspan="12">ไม่พบข้อมูลสต๊อก</td></tr>';
+
+  const wfStock = DB.stock.filter(s => !wf || s.wh === wf);
+  $('st-kpi-sku').textContent = fmt(new Set(wfStock.map(s=>s.sku)).size);
+  $('st-kpi-loc').textContent = fmt(new Set(wfStock.map(s=>s.wh+'/'+s.loc)).size);
+  $('st-kpi-low').textContent = fmt(DB.products.filter(p => totalQty(p.sku, wf) < p.min).length);
+}
+
+function renderRelocation() {
+  const rows = DB.moves.filter(m => m.type === 'ย้าย').slice().reverse();
+  $('tbl-relocation').innerHTML = rows.length ? rows.map(m => `
+    <tr><td class="mono">${m.ts}</td><td class="mono">${m.sku}</td><td>${prod(m.sku).name}</td>
+    <td class="num">${fmt(m.qty)}</td><td>${locChip(m.from)}</td><td>${locChip(m.to)}</td><td class="mono">${m.ref}</td><td>${m.by}</td></tr>`).join('')
+    : '<tr class="empty-row"><td colspan="8">ยังไม่มีประวัติการย้ายสต๊อก</td></tr>';
+}
+function renderAdjustment() {
+  const rows = DB.moves.filter(m => m.type === 'ปรับยอด').slice().reverse();
+  $('tbl-adjustment').innerHTML = rows.length ? rows.map(m => `
+    <tr><td class="mono">${m.ts}</td><td class="mono">${m.sku}</td><td>${prod(m.sku).name}</td>
+    <td class="num" style="font-weight:700; color:${m.qty<0?'var(--danger)':'var(--success)'}">${m.qty>0?'+':''}${fmt(m.qty)}</td>
+    <td>${locChip(m.from)}</td><td>${m.to}</td><td>${m.by}</td></tr>`).join('')
+    : '<tr class="empty-row"><td colspan="7">ยังไม่มีประวัติการปรับยอดสต๊อก</td></tr>';
+}
+function stockOptions() {
+  return DB.stock.map((s,i) =>
+    `<option value="${i}">${s.sku} · ${s.wh}/${s.loc} · Lot ${s.lot} · คงเหลือ ${fmt(s.qty)}</option>`).join('');
+}
+function openMoveModal() {
+  if (!DB.stock.length) return toast('⚠️ ไม่มีสต๊อกให้ย้าย');
+  openModal('ย้ายสต๊อกระหว่างตำแหน่ง', `
+    <div class="field" style="margin-bottom:14px"><label>เลือกสต๊อกต้นทาง</label><select id="mv-src">${stockOptions()}</select></div>
+    <div class="form-grid">
+      <div class="field"><label>จำนวนที่ย้าย</label><input type="number" id="mv-qty" min="1" value="1"></div>
+      <div class="field"><label>ตำแหน่งปลายทาง</label><select id="mv-to">${DB.locations.map(l=>`<option value="${l.wh}|${l.code}">${l.wh} / ${l.code}</option>`).join('')}</select></div>
+    </div>
+  `, `<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="confirmMove()">🔁 ย้ายสต๊อก</button>`);
+}
+function confirmMove() {
+  const s = DB.stock[+$('mv-src').value];
+  const qty = +$('mv-qty').value;
+  const [wh, loc] = $('mv-to').value.split('|');
+  if (!qty || qty > s.qty) return toast('⚠️ จำนวนไม่ถูกต้อง (คงเหลือ ' + fmt(s.qty) + ')');
+  const { sku, lot, exp, inDate } = s, fromLoc = s.loc, fromWh = s.wh;
+  removeStock(sku, fromWh, fromLoc, lot, qty);
+  addStock(sku, wh, loc, lot, qty, exp, inDate);
+  logMove('ย้าย', sku, qty, `${fromWh}/${fromLoc}`, `${wh}/${loc}`, 'MOVE');
+  closeModal(); renderAll(); toast(`ย้าย ${sku} × ${fmt(qty)} → ${loc} แล้ว`);
+}
+function openAdjustModal() {
+  if (!DB.stock.length) return toast('⚠️ ไม่มีสต๊อกให้ปรับ');
+  openModal('ปรับยอดสต๊อก (Stock Adjustment)', `
+    <div class="field" style="margin-bottom:14px"><label>เลือกสต๊อก</label><select id="adj-src">${stockOptions()}</select></div>
+    <div class="form-grid">
+      <div class="field"><label>ยอดใหม่ (นับจริง)</label><input type="number" id="adj-qty" min="0" value="0"></div>
+      <div class="field"><label>เหตุผล</label>
+        <select id="adj-reason"><option>ตรวจนับประจำงวด (Cycle Count)</option><option>สินค้าชำรุด/เสียหาย</option><option>สูญหาย</option><option>แก้ไขข้อมูลผิด</option></select></div>
+    </div>
+    <p class="hint">ระบบจะบันทึกผลต่างเป็นรายการ "ปรับยอด" ในประวัติเพื่อการตรวจสอบย้อนหลัง</p>
+  `, `<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="confirmAdjust()">✏️ บันทึกปรับยอด</button>`);
+}
+function confirmAdjust() {
+  const s = DB.stock[+$('adj-src').value];
+  const newQty = +$('adj-qty').value;
+  const diff = newQty - s.qty;
+  if (diff === 0) return toast('ยอดเท่าเดิม ไม่มีการเปลี่ยนแปลง');
+  logMove('ปรับยอด', s.sku, diff, `${s.wh}/${s.loc}`, $('adj-reason').value, 'ADJ');
+  s.qty = newQty;
+  if (s.qty === 0) DB.stock.splice(DB.stock.indexOf(s), 1);
+  closeModal(); renderAll(); toast(`ปรับยอด ${s.sku} เป็น ${fmt(newQty)} แล้ว`);
+}
+
+// ---------- Picking ----------
+function orderStatusBadge(s) {
+  return { 'รอจัด':'<span class="badge b-amber"><span class="dot"></span> ⑦ รอหยิบ</span>',
+           'กำลังจัด':'<span class="badge b-blue"><span class="dot"></span> ⑦ กำลังหยิบ</span>',
+           'จัดครบแล้ว':'<span class="badge b-purple"><span class="dot"></span> ⑧ หยิบครบ รอแพ็ค</span>',
+           'แพ็คแล้ว':'<span class="badge b-blue"><span class="dot"></span> ⑨ แพ็คแล้ว รอตรวจ</span>',
+           'พร้อมส่ง':'<span class="badge b-green"><span class="dot"></span> ⑩ ผ่านตรวจ พร้อมส่ง</span>',
+           'ส่งแล้ว':'<span class="badge b-green"><span class="dot"></span> ✓ ส่งแล้ว</span>' }[s] || s;
+}
+function renderPicking(q='') {
+  q = q.toLowerCase();
+  const otabSet = outboundTab ? outboundTab.split(',') : null;
+  $('picking-head').textContent = '🛒 ' + (OUTBOUND_TAB_TITLES[outboundTab] || OUTBOUND_TAB_TITLES[''])[0];
+  const rows = DB.orders
+    .filter(o => !otabSet || otabSet.includes(o.status))
+    .filter(o => !q || o.id.toLowerCase().includes(q) || o.customer.toLowerCase().includes(q));
+  $('tbl-picking').innerHTML = rows.length ? rows.map(o => `
+    <tr>
+      <td class="mono">${o.id}</td><td>${o.customer}</td><td>${o.date}</td>
+      <td class="num">${o.items.length}</td><td>${orderStatusBadge(o.status)}</td>
+      <td style="text-align:right; white-space:nowrap">
+        ${['รอจัด','กำลังจัด'].includes(o.status) ? `<button class="btn btn-primary btn-sm" onclick="openPickModal('${o.id}')">🛒 หยิบสินค้า</button>` : ''}
+        ${o.status==='จัดครบแล้ว' ? `<button class="btn btn-primary btn-sm" onclick="openPackModal('${o.id}')">📦 แพ็คสินค้า</button>` : ''}
+        ${o.status==='แพ็คแล้ว' ? `<button class="btn btn-primary btn-sm" onclick="openOutInspectModal('${o.id}')">🔍 ตรวจก่อนส่ง</button>` : ''}
+        ${o.status==='พร้อมส่ง' ? `<button class="btn btn-success btn-sm" onclick="openShipModal('${o.id}')">🚚 จัดส่ง</button>` : ''}
+        ${o.cartons ? `<button class="btn btn-outline btn-sm" onclick="printPackingSlip('${o.id}')" title="พิมพ์ใบแพ็ค">🖨 ใบแพ็ค</button>` : ''}
+      </td>
+    </tr>`).join('') : '<tr class="empty-row"><td colspan="6">ไม่พบใบสั่งจ่ายสินค้า</td></tr>';
+  const n = DB.orders.filter(o => ['รอจัด','กำลังจัด','จัดครบแล้ว','แพ็คแล้ว'].includes(o.status)).length;
+  $('nav-pick-n').textContent = n || '';
+  $('nav-pick-n').style.display = n ? '' : 'none';
+}
+function openOrderModal() {
+  openModal('⑥ สร้างใบสั่งจ่ายสินค้า (Delivery Order)', `
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="field"><label>ลูกค้า / แผนกผู้ขอเบิก</label><input id="f-customer" placeholder="เช่น ฝ่ายผลิต โรงงาน 1"></div>
+      <div class="field"><label>วันที่ต้องการ</label><input type="date" id="f-odate" value="${today()}"></div>
+    </div>
+    <label>รายการสินค้า</label>
+    <div id="ord-lines"></div>
+    <button class="btn btn-outline btn-sm" onclick="addOrdLine()">＋ เพิ่มรายการ</button>
+  `, `<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveOrder()">บันทึกคำสั่งเบิก</button>`, true);
+  addOrdLine();
+}
+function addOrdLine() {
+  const div = document.createElement('div');
+  div.className = 'form-grid';
+  div.style.cssText = 'margin-bottom:4px; grid-template-columns:2fr 1fr 1fr auto; align-items:start;';
+  const firstSku = DB.products[0]?.sku || '';
+  div.innerHTML = `
+    <select class="ln-sku" onchange="refreshLineUom(this)">${DB.products.map(p=>`<option value="${p.sku}">${p.sku} — ${p.name} (เบิกได้ ${fmt(availableQty(p.sku))})</option>`).join('')}</select>
+    <div><input type="number" class="ln-qty" min="1" value="1" placeholder="จำนวน" oninput="refreshLineHint(this)"><div class="hint ln-hint"></div></div>
+    <select class="ln-uom" onchange="refreshLineHint(this)">${uomOptionsHtml(firstSku, prod(firstSku).unit)}</select>
+    <button class="btn btn-danger-o btn-sm" onclick="this.parentElement.remove()">🗑</button>`;
+  $('ord-lines').appendChild(div);
+  refreshLineHint(div.querySelector('.ln-qty'));
+}
+function saveOrder() {
+  const cust = $('f-customer').value.trim();
+  if (!cust) return toast('⚠️ กรุณากรอกลูกค้า/แผนก');
+  const items = [...document.querySelectorAll('#ord-lines > div')].map(d => {
+    const sku = d.querySelector('.ln-sku').value;
+    const uom = d.querySelector('.ln-uom').value;
+    const qty = +d.querySelector('.ln-qty').value || 0;
+    const factor = uomFactor(sku, uom) || 1;
+    return { sku, qty: +(qty * factor).toFixed(3), picked: 0, from:'' };
+  }).filter(i => i.qty > 0);
+  if (!items.length) return toast('⚠️ กรุณาเพิ่มรายการสินค้า');
+  const short = items.find(i => availableQty(i.sku) < i.qty);
+  if (short) return toast(`⚠️ ${short.sku} สต๊อกเบิกได้ไม่พอ (เบิกได้ ${fmt(availableQty(short.sku))})`);
+  const id = `DO-2607-${pad3(seq.pk++)}`;
+  DB.orders.unshift({ id, customer:cust, date:$('f-odate').value, status:'รอจัด', items });
+  closeModal(); renderAll(); toast(`สร้าง Delivery Order ${id} แล้ว — รอหยิบสินค้า`);
+}
+function pickCandidates(sku) {
+  // ตำแหน่งที่หยิบได้: เฉพาะสถานะ Available นอกจุดพัก เรียงตามกติกา (FIFO/FEFO/LIFO)
+  return ruleSortStock(sku, DB.stock.filter(s =>
+    s.sku === sku && s.loc !== 'SHIP-01' && s.loc !== 'RECV-01' && (s.status || 'AVAILABLE') === 'AVAILABLE'));
+}
+function suggestPickLoc(sku, qty) {
+  return pickCandidates(sku)[0];
+}
+function pickOptLabel(s, first) {
+  const rule = ruleOf(s.sku);
+  const dateInfo = rule === 'FEFO' ? 'EXP ' + (s.exp || '-') : 'รับเข้า ' + (s.inDate || '-');
+  return `${first ? '★ ' : ''}${s.wh}/${s.loc} · Lot ${s.lot} · ${dateInfo} (${fmt(s.qty)})`;
+}
+function openPickModal(id) {
+  const o = DB.orders.find(x => x.id === id);
+  openModal(`⑦ ใบหยิบสินค้า (Pick List) — ${o.id}`, `
+    <div class="steps">
+      <div class="step done"><span class="n">6</span> DO</div><span class="step-arrow">→</span>
+      <div class="step now"><span class="n">7</span> หยิบ</div><span class="step-arrow">→</span>
+      <div class="step"><span class="n">8</span> แพ็ค</div><span class="step-arrow">→</span>
+      <div class="step"><span class="n">9</span> ตรวจสอบ</div><span class="step-arrow">→</span>
+      <div class="step"><span class="n">10</span> จัดส่ง</div>
+    </div>
+    <p style="font-size:.84rem;color:var(--muted);margin-bottom:12px">ระบบเรียงตำแหน่งหยิบตาม<b>กติกาของสินค้า (Picking Rule)</b> — FIFO เก่าสุดก่อน · FEFO ใกล้หมดอายุก่อน · LIFO ใหม่สุดก่อน (★ = ต้องหยิบก่อนตามกติกา)</p>
+    <table>
+      <thead><tr><th>SKU</th><th>สินค้า</th><th>กติกา</th><th class="num">สั่งเบิก</th><th>หยิบจาก (เรียงตามกติกา)</th><th style="width:110px">หยิบจริง</th></tr></thead>
+      <tbody>${o.items.map((it,i) => {
+        const cands = pickCandidates(it.sku);
+        const sug = cands[0];
+        return `<tr><td class="mono">${it.sku}</td><td>${prod(it.sku).name}</td><td>${ruleBadge(ruleOf(it.sku))}</td><td class="num">${fmt(it.qty)}</td>
+          <td>${sug ? `<select id="pk-loc-${i}">${cands.map((s,ci)=>
+              `<option value="${DB.stock.indexOf(s)}" ${ci===0?'selected':''}>${pickOptLabel(s, ci===0)}</option>`).join('')}</select>`
+            : '<span class="qty-warn">ไม่มีสต๊อก</span>'}</td>
+          <td><input type="number" id="pk-qty-${i}" min="0" value="${sug ? Math.min(it.qty - it.picked, sug.qty) : 0}"></td></tr>`;
+      }).join('')}</tbody>
+    </table>
+  `, `<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-success" onclick="confirmPick('${o.id}')">✓ ยืนยันการหยิบ</button>`, true);
+}
+function confirmPick(id) {
+  const o = DB.orders.find(x => x.id === id);
+  let any = false;
+  o.items.forEach((it, i) => {
+    const locEl = $('pk-loc-'+i), qtyEl = $('pk-qty-'+i);
+    if (!locEl || !qtyEl) return;
+    const qty = +qtyEl.value || 0;
+    if (qty <= 0) return;
+    const s = DB.stock[+locEl.value];
+    if (!s || s.sku !== it.sku || s.qty < qty) { toast(`⚠️ ${it.sku}: สต๊อกที่เลือกไม่พอ`); return; }
+    const fromDesc = `${s.wh}/${s.loc}`;
+    removeStock(it.sku, s.wh, s.loc, s.lot, qty);
+    addStock(it.sku, 'WH1', 'SHIP-01', '-', qty);
+    it.picked += qty; it.from = fromDesc;
+    logMove('เบิกออก', it.sku, qty, fromDesc, 'SHIP-01', o.id);
+    any = true;
+  });
+  if (!any) return;
+  o.status = o.items.every(it => it.picked >= it.qty) ? 'จัดครบแล้ว' : 'กำลังจัด';
+  closeModal(); renderAll();
+  toast(o.status === 'จัดครบแล้ว' ? `${o.id} หยิบครบแล้ว — ไปขั้นตอนแพ็คสินค้า` : `บันทึกการหยิบบางส่วนของ ${o.id}`);
+}
+
+// ---------- Packing (Multi-carton process) ----------
+const PACK_TYPES = ['กล่องลูกฟูก','พาเลท + ฟิล์มยืด','ถุง/ซองกันกระแทก','ลังพลาสติก'];
+let packCtx = null; // { id, cartons:[{type, weight, items:{sku:qty}}] }
+
+function openPackModal(id) {
+  const o = DB.orders.find(x => x.id === id);
+  packCtx = { id, cartons: o.cartons ? JSON.parse(JSON.stringify(o.cartons)) : [{ type:PACK_TYPES[0], weight:0, items:{} }] };
+  openModal(`⑧ บรรจุหีบห่อ (Packing) — ${o.id}`, `
+    <div class="steps">
+      <div class="step done"><span class="n">6</span> DO</div><span class="step-arrow">→</span>
+      <div class="step done"><span class="n">7</span> หยิบ</div><span class="step-arrow">→</span>
+      <div class="step now"><span class="n">8</span> แพ็ค</div><span class="step-arrow">→</span>
+      <div class="step"><span class="n">9</span> ตรวจสอบ</div><span class="step-arrow">→</span>
+      <div class="step"><span class="n">10</span> จัดส่ง</div>
+    </div>
+    <p style="font-size:.84rem;color:var(--muted);margin-bottom:12px">บรรจุสินค้าที่หยิบมาแล้วลงกล่องทีละใบ — เพิ่มได้หลายกล่อง ระบบจะยืนยันการแพ็คได้ก็ต่อเมื่อ<b>บรรจุครบทุกชิ้น</b></p>
+    <div id="pack-body"></div>
+  `, `<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-success" id="pack-confirm-btn" disabled onclick="confirmPack('${o.id}')">📦 ยืนยันการแพ็ค</button>`, true);
+  renderPackBody();
+}
+function pkPackedBySku() {
+  const packed = {};
+  packCtx.cartons.forEach(c => Object.entries(c.items).forEach(([sku,q]) => packed[sku] = (packed[sku]||0) + q));
+  return packed;
+}
+function renderPackBody() {
+  const o = DB.orders.find(x => x.id === packCtx.id);
+  const packed = pkPackedBySku();
+  const remaining = sku => {
+    const it = o.items.find(i => i.sku === sku);
+    return (it ? it.picked : 0) - (packed[sku] || 0);
+  };
+  const allPacked = o.items.every(it => remaining(it.sku) === 0) && packCtx.cartons.some(c => Object.keys(c.items).length);
+  const totalW = packCtx.cartons.reduce((a,c) => a + (+c.weight || 0), 0);
+
+  $('pack-body').innerHTML = `
+    <table style="margin-bottom:16px">
+      <thead><tr><th>SKU</th><th>สินค้า</th><th>Dim ก×ย×ส (ซม.)</th><th class="num">Gross/หน่วย (กก.)</th><th class="num">หยิบมา</th><th class="num">บรรจุแล้ว</th><th class="num">คงเหลือต้องบรรจุ</th></tr></thead>
+      <tbody>${o.items.map(it => {
+        const rem = remaining(it.sku);
+        const p = prod(it.sku);
+        return `<tr><td class="mono">${it.sku}</td><td>${p.name}</td>
+          <td class="mono">${dimText(p)}</td><td class="num">${p.grossW != null ? p.grossW : '—'}</td>
+          <td class="num">${fmt(it.picked)}</td><td class="num" style="color:var(--success)">${fmt(packed[it.sku]||0)}</td>
+          <td class="num ${rem > 0 ? 'qty-warn' : ''}" style="font-weight:700">${rem === 0 ? '✓ ครบ' : fmt(rem)}</td></tr>`;
+      }).join('')}</tbody>
+    </table>
+
+    ${packCtx.cartons.map((c,ci) => {
+      const skusLeft = o.items.filter(it => remaining(it.sku) > 0);
+      return `
+      <div style="border:1.5px solid var(--border); border-radius:12px; padding:14px 16px; margin-bottom:12px; background:var(--card2)">
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px">
+          <b style="font-size:.95rem">📦 กล่องที่ ${ci+1}</b>
+          <select style="width:180px" onchange="pkSetType(${ci}, this.value)">${PACK_TYPES.map(t => `<option ${c.type===t?'selected':''}>${t}</option>`).join('')}</select>
+          <input type="number" min="0" step="0.1" value="${c.weight||0}" style="width:110px" onchange="pkSetWeight(${ci}, this.value)" title="น้ำหนัก (กก.)"> กก.
+          <div style="flex:1"></div>
+          ${packCtx.cartons.length > 1 ? `<button class="btn btn-danger-o btn-sm" onclick="pkRemoveCarton(${ci})">🗑 ลบกล่อง</button>` : ''}
+        </div>
+        ${Object.keys(c.items).length ? `<table style="margin-bottom:10px; background:var(--card)">
+          <thead><tr><th>SKU</th><th>สินค้า</th><th class="num">จำนวนในกล่อง</th><th></th></tr></thead>
+          <tbody>${Object.entries(c.items).map(([sku,q]) => `
+            <tr><td class="mono">${sku}</td><td>${prod(sku).name}</td><td class="num" style="font-weight:700">${fmt(q)}</td>
+            <td style="text-align:right"><button class="btn btn-danger-o btn-sm" onclick="pkRemoveItem(${ci}, '${sku}')">นำออก</button></td></tr>`).join('')}
+          </tbody></table>` : '<p class="hint" style="margin-bottom:10px">ยังไม่มีสินค้าในกล่องนี้</p>'}
+        ${skusLeft.length ? `
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+          <select id="pk-add-sku-${ci}" style="width:auto; flex:1; min-width:200px">${skusLeft.map(it =>
+            `<option value="${it.sku}">${it.sku} — ${prod(it.sku).name} (เหลือ ${fmt(remaining(it.sku))})</option>`).join('')}</select>
+          <input type="number" id="pk-add-qty-${ci}" min="1" value="${remaining(skusLeft[0].sku)}" style="width:100px">
+          <button class="btn btn-primary btn-sm" onclick="pkAddItem(${ci})">➕ ใส่กล่อง</button>
+        </div>` : ''}
+      </div>`;
+    }).join('')}
+
+    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap">
+      <button class="btn btn-outline btn-sm" onclick="pkAddCarton()">＋ เพิ่มกล่อง</button>
+      <span class="hint">รวม ${packCtx.cartons.length} กล่อง · น้ำหนักรวม ${totalW.toFixed(1)} กก. (คำนวณจาก Gross Weight อัตโนมัติ — แก้ไขได้)</span>
+      <div style="flex:1"></div>
+      ${allPacked ? '<span class="badge b-green">✓ บรรจุครบทุกชิ้น — พร้อมยืนยัน</span>' : '<span class="badge b-amber">ยังบรรจุไม่ครบ</span>'}
+    </div>`;
+  $('pack-confirm-btn').disabled = !allPacked;
+}
+function pkAddCarton() { packCtx.cartons.push({ type:PACK_TYPES[0], weight:0, items:{} }); renderPackBody(); }
+function pkRemoveCarton(ci) { packCtx.cartons.splice(ci, 1); renderPackBody(); }
+function pkSetType(ci, v) { packCtx.cartons[ci].type = v; }
+function pkSetWeight(ci, v) { packCtx.cartons[ci].weight = +v || 0; renderPackBody(); }
+// น้ำหนักกล่องตามสเปค = Σ (Gross Weight × จำนวน) ของสินค้าในกล่อง
+function pkAutoWeight(c) {
+  return +Object.entries(c.items).reduce((a,[sku,q]) => a + grossOf(sku) * q, 0).toFixed(2);
+}
+function pkAddItem(ci) {
+  const o = DB.orders.find(x => x.id === packCtx.id);
+  const sku = $('pk-add-sku-' + ci).value;
+  const qty = +$('pk-add-qty-' + ci).value || 0;
+  const it = o.items.find(i => i.sku === sku);
+  const rem = it.picked - (pkPackedBySku()[sku] || 0);
+  if (qty <= 0 || qty > rem) return toast(`⚠️ จำนวนไม่ถูกต้อง (เหลือให้บรรจุ ${fmt(rem)})`);
+  const c = packCtx.cartons[ci];
+  c.items[sku] = (c.items[sku] || 0) + qty;
+  c.weight = pkAutoWeight(c);
+  renderPackBody();
+}
+function pkRemoveItem(ci, sku) {
+  const c = packCtx.cartons[ci];
+  delete c.items[sku];
+  c.weight = pkAutoWeight(c);
+  renderPackBody();
+}
+function confirmPack(id) {
+  const o = DB.orders.find(x => x.id === id);
+  const cartons = packCtx.cartons.filter(c => Object.keys(c.items).length);
+  const packed = pkPackedBySku();
+  if (!o.items.every(it => (packed[it.sku] || 0) === it.picked)) return toast('⚠️ ยังบรรจุไม่ครบทุกชิ้น');
+  o.cartons = cartons;
+  o.pack = {
+    boxes: cartons.length,
+    weight: +cartons.reduce((a,c) => a + (+c.weight || 0), 0).toFixed(1),
+    type: [...new Set(cartons.map(c => c.type))].join(' / '),
+  };
+  o.status = 'แพ็คแล้ว';
+  packCtx = null;
+  closeModal(); renderAll();
+  toast(`${o.id} แพ็คเสร็จ ${o.pack.boxes} กล่อง (${o.pack.weight} กก.) — รอตรวจสอบก่อนส่ง`);
+}
+// ใบแพ็ค / ใบปะหน้ากล่อง
+function printPackingSlip(id) {
+  const o = DB.orders.find(x => x.id === id);
+  if (!o.cartons) return toast('⚠️ ยังไม่มีข้อมูลการแพ็ค');
+  const netTotal = +o.cartons.reduce((a,c) => a + Object.entries(c.items).reduce((x,[sku,q]) => x + (prod(sku).netW || 0) * q, 0), 0).toFixed(2);
+  const grossTotal = +o.cartons.reduce((a,c) => a + Object.entries(c.items).reduce((x,[sku,q]) => x + grossOf(sku) * q, 0), 0).toFixed(2);
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>Packing Slip — ${o.id}</title>
+    <style>
+      body { font-family:'Noto Sans Thai',sans-serif; padding:32px; color:#0f172a; }
+      h1 { font-size:1.3rem; margin-bottom:2px; } .sub { color:#64748b; font-size:.85rem; margin-bottom:18px; }
+      .head-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px 24px; margin-bottom:20px; font-size:.9rem; }
+      .carton { border:1.5px solid #0f172a; border-radius:10px; padding:14px 18px; margin-bottom:14px; page-break-inside:avoid; }
+      .carton h2 { font-size:1rem; margin-bottom:8px; }
+      table { width:100%; border-collapse:collapse; font-size:.85rem; }
+      th, td { border:1px solid #cbd5e1; padding:6px 10px; text-align:left; }
+      th { background:#f1f5f9; } td.num, th.num { text-align:right; }
+      .sign { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:36px; font-size:.85rem; text-align:center; }
+      .sign div { border-top:1px dashed #94a3b8; padding-top:8px; }
+    </style></head><body>
+    <h1>📦 ใบแพ็คสินค้า (Packing Slip)</h1>
+    <div class="sub">WMS Pro — Warehouse Management System</div>
+    <div class="head-grid">
+      <div><b>เลขที่ DO:</b> ${o.id}</div><div><b>วันที่:</b> ${o.date}</div>
+      <div><b>ลูกค้า/ปลายทาง:</b> ${o.customer}</div>
+      <div><b>จำนวนกล่อง:</b> ${o.cartons.length} · <b>น้ำหนักชั่งจริง:</b> ${o.pack.weight} กก.</div>
+      <div><b>Net Weight รวม:</b> ${netTotal.toLocaleString('th-TH')} กก.</div>
+      <div><b>Gross Weight รวม:</b> ${grossTotal.toLocaleString('th-TH')} กก.</div>
+    </div>
+    ${o.cartons.map((c,ci) => `
+      <div class="carton">
+        <h2>กล่องที่ ${ci+1} / ${o.cartons.length} — ${c.type} · ${c.weight} กก.</h2>
+        <table><thead><tr><th>SKU</th><th>สินค้า</th><th class="num">จำนวน</th></tr></thead>
+        <tbody>${Object.entries(c.items).map(([sku,q]) =>
+          `<tr><td>${sku}</td><td>${prod(sku).name}</td><td class="num">${q.toLocaleString('th-TH')}</td></tr>`).join('')}
+        </tbody></table>
+      </div>`).join('')}
+    <div class="sign"><div>ผู้แพ็คสินค้า</div><div>ผู้ตรวจสอบ</div></div>
+    <script>window.print();<\/script></body></html>`);
+  w.document.close();
+}
+
+// ---------- Outbound Inspection ----------
+function openOutInspectModal(id) {
+  const o = DB.orders.find(x => x.id === id);
+  openModal(`⑨ ตรวจสอบก่อนจัดส่ง (Outbound Inspection) — ${o.id}`, `
+    <div class="steps">
+      <div class="step done"><span class="n">6</span> DO</div><span class="step-arrow">→</span>
+      <div class="step done"><span class="n">7</span> หยิบ</div><span class="step-arrow">→</span>
+      <div class="step done"><span class="n">8</span> แพ็ค</div><span class="step-arrow">→</span>
+      <div class="step now"><span class="n">9</span> ตรวจสอบ</div><span class="step-arrow">→</span>
+      <div class="step"><span class="n">10</span> จัดส่ง</div>
+    </div>
+    <p style="font-size:.84rem;color:var(--muted);margin-bottom:12px">ตรวจสอบความถูกต้องก่อนส่งมอบให้ขนส่ง — รวม ${o.pack ? o.pack.boxes + ' กล่อง · ' + o.pack.weight + ' กก.' : '—'}</p>
+    ${o.cartons ? `<table style="margin-bottom:14px">
+      <thead><tr><th>กล่อง</th><th>บรรจุภัณฑ์</th><th class="num">น้ำหนัก (กก.)</th><th>สินค้าในกล่อง</th></tr></thead>
+      <tbody>${o.cartons.map((c,ci) => `
+        <tr><td><b>กล่องที่ ${ci+1}</b></td><td>${c.type}</td><td class="num">${c.weight}</td>
+        <td>${Object.entries(c.items).map(([sku,q]) => `<span class="loc-chip">${sku} × ${fmt(q)}</span>`).join(' ')}</td></tr>`).join('')}
+      </tbody></table>` : ''}
+    <table style="margin-bottom:16px">
+      <thead><tr><th>รายการตรวจสอบ</th><th style="width:140px">ผลตรวจ</th></tr></thead>
+      <tbody>
+        <tr><td>ชนิดและจำนวนสินค้าตรงตาม Delivery Order</td><td><select id="oqc-1"><option>ผ่าน</option><option>ไม่ผ่าน</option></select></td></tr>
+        <tr><td>สภาพบรรจุภัณฑ์เรียบร้อย ไม่ชำรุด</td><td><select id="oqc-2"><option>ผ่าน</option><option>ไม่ผ่าน</option></select></td></tr>
+        <tr><td>ติดป้ายที่อยู่ผู้รับ / เอกสารกำกับครบถ้วน</td><td><select id="oqc-3"><option>ผ่าน</option><option>ไม่ผ่าน</option></select></td></tr>
+      </tbody>
+    </table>
+    <div class="field"><label>หมายเหตุ</label><input id="oqc-note" placeholder="(ถ้ามี)"></div>
+  `, `<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-success" onclick="confirmOutInspect('${o.id}')">✓ บันทึกผลตรวจสอบ</button>`, true);
+}
+function confirmOutInspect(id) {
+  const o = DB.orders.find(x => x.id === id);
+  const pass = ['oqc-1','oqc-2','oqc-3'].every(x => $(x).value === 'ผ่าน');
+  o.qc = pass ? 'ผ่าน' : 'ไม่ผ่าน';
+  o.qcNote = $('oqc-note').value;
+  o.status = pass ? 'พร้อมส่ง' : 'จัดครบแล้ว';
+  closeModal(); renderAll();
+  toast(pass ? `${o.id} ผ่านการตรวจสอบ — พร้อมจัดส่ง` : `${o.id} ไม่ผ่านตรวจสอบ — ส่งกลับไปแพ็คใหม่`);
+}
+
+// ---------- Shipping ----------
+function renderShipping() {
+  $('tbl-shipping').innerHTML = DB.shipments.length ? DB.shipments.map(s => `
+    <tr>
+      <td class="mono">${s.id}</td><td class="mono">${s.order}</td><td>${s.dest}</td>
+      <td>${s.carrier}</td><td class="mono">${s.tracking || '—'}</td><td>${s.date}</td>
+      <td>${s.status==='ส่งแล้ว' ? '<span class="badge b-green"><span class="dot"></span> ส่งแล้ว</span>' : '<span class="badge b-blue"><span class="dot"></span> อยู่ระหว่างขนส่ง</span>'}</td>
+      <td style="text-align:right">${s.status!=='ส่งแล้ว' ? `<button class="btn btn-success btn-sm" onclick="markDelivered('${s.id}')">✓ ส่งถึงแล้ว</button>` : ''}</td>
+    </tr>`).join('') : '<tr class="empty-row"><td colspan="8">ยังไม่มีการจัดส่ง</td></tr>';
+}
+function openShipModal(orderId) {
+  const o = DB.orders.find(x => x.id === orderId);
+  openModal(`⑩ จัดส่งสินค้า (Shipping) — ${o.id}`, `
+    <div class="steps">
+      <div class="step done"><span class="n">6</span> DO</div><span class="step-arrow">→</span>
+      <div class="step done"><span class="n">7</span> หยิบ</div><span class="step-arrow">→</span>
+      <div class="step done"><span class="n">8</span> แพ็ค</div><span class="step-arrow">→</span>
+      <div class="step done"><span class="n">9</span> ตรวจสอบ</div><span class="step-arrow">→</span>
+      <div class="step now"><span class="n">10</span> จัดส่ง</div>
+    </div>
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="field"><label>ปลายทาง</label><input id="f-dest" value="${o.customer}"></div>
+      <div class="field"><label>ขนส่ง</label>
+        <select id="f-carrier"><option>Kerry Express</option><option>Flash Express</option><option>ไปรษณีย์ไทย EMS</option><option>รถบริษัท</option><option>ลูกค้ารับเอง</option></select></div>
+      <div class="field"><label>Tracking No.</label><input id="f-tracking" placeholder="(ถ้ามี)"></div>
+      <div class="field"><label>วันที่ส่ง</label><input type="date" id="f-shipdate" value="${today()}"></div>
+    </div>
+    <table>
+      <thead><tr><th>SKU</th><th>สินค้า</th><th class="num">จำนวนส่ง</th></tr></thead>
+      <tbody>${o.items.map(it => `<tr><td class="mono">${it.sku}</td><td>${prod(it.sku).name}</td><td class="num">${fmt(it.picked)}</td></tr>`).join('')}</tbody>
+    </table>
+    ${o.pack ? `<p class="hint" style="margin-top:10px">📦 บรรจุ ${o.pack.boxes} กล่อง · น้ำหนักรวม ${o.pack.weight} กก. · ${o.pack.type} — <a href="javascript:void(0)" onclick="printPackingSlip('${o.id}')">พิมพ์ใบแพ็ค</a></p>` : ''}
+  `, `<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-success" onclick="confirmShip('${o.id}')">🚚 ยืนยันส่งออก</button>`, true);
+}
+function confirmShip(orderId) {
+  const o = DB.orders.find(x => x.id === orderId);
+  const id = `SHP-2607-${pad3(seq.shp++)}`;
+  o.items.forEach(it => {
+    removeStock(it.sku, 'WH1', 'SHIP-01', null, it.picked);
+    logMove('ส่งออก', it.sku, it.picked, 'SHIP-01', 'ลูกค้า', id);
+  });
+  DB.shipments.unshift({ id, order:o.id, dest:$('f-dest').value, carrier:$('f-carrier').value,
+    tracking:$('f-tracking').value, date:$('f-shipdate').value, status:'อยู่ระหว่างขนส่ง' });
+  o.status = 'ส่งแล้ว';
+  closeModal(); renderAll(); toast(`สร้างใบจัดส่ง ${id} และตัดสต๊อกแล้ว`);
+}
+function markDelivered(id) {
+  DB.shipments.find(s => s.id === id).status = 'ส่งแล้ว';
+  renderAll(); toast(`${id} ส่งถึงปลายทางแล้ว`);
+}
+
+// ---------- Reports ----------
+function showReportCard(id) {
+  REPORT_IDS.forEach(x => $(x).style.display = x===id ? '' : 'none');
+  renderReports();
+}
+function renderReports() {
+  const wf = whFilter();
+  // สต๊อกรวม
+  $('tbl-rp-stock').innerHTML = DB.products.map(p => {
+    const t = totalQty(p.sku, wf);
+    const low = t < p.min;
+    return `<tr><td class="mono">${p.sku}</td><td>${p.name}</td><td>${p.cat}</td>
+      <td class="num" style="font-weight:700">${fmt(t)}</td><td>${unitName(p.unit)}</td><td class="num">${fmt(p.min)}</td>
+      <td>${low ? '<span class="badge b-red"><span class="dot"></span> ต้องสั่งซื้อ</span>' : '<span class="badge b-green"><span class="dot"></span> ปกติ</span>'}</td></tr>`;
+  }).join('');
+
+  // ความเคลื่อนไหว
+  const tf = $('rp-move-type').value;
+  const moves = DB.moves.filter(m => !tf || m.type === tf);
+  $('tbl-rp-move').innerHTML = moves.length ? moves.map(m => `
+    <tr><td class="mono">${m.ts}</td><td>${moveBadge(m.type)}</td><td class="mono">${m.sku}</td><td>${prod(m.sku).name}</td>
+    <td class="num">${fmt(m.qty)}</td><td>${locChip(m.from)}</td><td>${locChip(m.to)}</td><td class="mono">${m.ref}</td><td>${m.by}</td></tr>`).join('')
+    : '<tr class="empty-row"><td colspan="9">ไม่มีข้อมูล</td></tr>';
+
+  // ---- การใช้พื้นที่คลัง (Zone / Rack) ----
+  const usage = locUsage();
+  const zones = {};
+  usage.forEach(u => {
+    const key = u.wh + '/' + u.zone;
+    if (!zones[key]) zones[key] = { wh:u.wh, zone:u.zone, cap:0, used:0, locs:0, empty:0, full:0 };
+    const z = zones[key];
+    z.cap += u.cap; z.used += u.used; z.locs++;
+    if (u.status === 'ว่าง') z.empty++;
+    if (u.status === 'เต็ม') z.full++;
+  });
+  const utilColor = p => p >= 90 ? '#f87171' : p >= 60 ? '#fbbf24' : '#22c55e';
+  const utilBar = p => `<div class="bar-track" style="height:16px"><div class="bar-fill" style="width:${Math.min(100,p)}%; background:${utilColor(p)}; font-size:.68rem">${p}%</div></div>`;
+  $('space-zone-bars').innerHTML = Object.values(zones).map(z => {
+    const zName = (DB.zones.find(x => x.code === z.zone && x.wh === z.wh) || {}).name || '';
+    const pct = z.cap ? Math.round(z.used / z.cap * 100) : 0;
+    return `<div class="bar-row"><div class="bl" style="width:190px"><b>${z.wh} / Zone ${z.zone}</b><br><span style="font-size:.72rem">${zName}</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,pct)}%; background:${utilColor(pct)}">${pct}% (${fmt(z.used)}/${fmt(z.cap)})</div></div></div>`;
+  }).join('') || '<p style="color:var(--muted)">ไม่มีข้อมูล</p>';
+  const availStatusBadge = st => st === 'ว่าง' ? '<span class="badge b-green"><span class="dot"></span> ว่าง</span>'
+    : st === 'เต็ม' ? '<span class="badge b-red"><span class="dot"></span> เต็ม</span>'
+    : '<span class="badge b-blue"><span class="dot"></span> ใช้งานบางส่วน</span>';
+  $('tbl-rp-space').innerHTML = usage.map(u => `
+    <tr><td>${u.wh}</td><td>${u.zone}</td><td>${locChip(u.code)}</td><td>${u.type}</td>
+    <td class="num">${fmt(u.cap)}</td><td class="num">${fmt(u.used)}</td>
+    <td>${utilBar(u.pct)}</td><td>${availStatusBadge(u.status)}</td></tr>`).join('')
+    || '<tr class="empty-row"><td colspan="8">ไม่มีข้อมูล</td></tr>';
+
+  // ---- พื้นที่ว่าง / เต็ม ----
+  const af = $('avail-filter').value;
+  const availRows = usage.filter(u => !af || u.status === af);
+  const nEmpty = usage.filter(u => u.status === 'ว่าง').length;
+  const nPart = usage.filter(u => u.status === 'ใช้งานบางส่วน').length;
+  const nFull = usage.filter(u => u.status === 'เต็ม').length;
+  const freeCap = usage.reduce((a,u) => a + Math.max(0, u.cap - u.used), 0);
+  $('avail-kpis').innerHTML = `
+    <div class="kpi"><div class="kico k-green">🟢</div><div><div class="num">${fmt(nEmpty)}</div><div class="lbl">Location ว่าง</div></div></div>
+    <div class="kpi"><div class="kico k-blue">🔵</div><div><div class="num">${fmt(nPart)}</div><div class="lbl">ใช้งานบางส่วน</div></div></div>
+    <div class="kpi"><div class="kico k-red">🔴</div><div><div class="num">${fmt(nFull)}</div><div class="lbl">เต็ม</div></div></div>
+    <div class="kpi"><div class="kico k-purple">📐</div><div><div class="num">${fmt(freeCap)}</div><div class="lbl">ความจุคงเหลือรวม (หน่วย)</div></div></div>`;
+  $('tbl-rp-avail').innerHTML = availRows.map(u => `
+    <tr><td>${u.wh}</td><td>${u.zone}</td><td>${locChip(u.code)}</td><td>${u.type}</td>
+    <td class="num">${fmt(u.cap)}</td><td class="num">${fmt(u.used)}</td>
+    <td class="num" style="font-weight:700; color:${u.cap-u.used>0?'var(--success)':'var(--danger)'}">${fmt(Math.max(0,u.cap-u.used))}</td>
+    <td>${availStatusBadge(u.status)}</td></tr>`).join('')
+    || '<tr class="empty-row"><td colspan="8">ไม่พบ Location ตามเงื่อนไข</td></tr>';
+
+  // ---- สินค้าไม่เป็นไปตาม Storage Rule ----
+  const viols = storageViolations();
+  $('comply-count').textContent = viols.length ? `พบ ${viols.length} รายการ` : '';
+  $('comply-count').style.display = viols.length ? '' : 'none';
+  $('tbl-rp-comply').innerHTML = viols.length ? viols.map(v => {
+    const targets = DB.locations.filter(l => l.wh === v.wh && l.type === v.need).map(l => l.code);
+    return `<tr>
+      <td class="mono">${v.sku}</td><td>${prod(v.sku).name}</td><td>${storageBadge(v.st)}</td>
+      <td>${v.wh}</td><td>${locChip(v.loc)}</td>
+      <td><span class="badge b-red">✗ ${v.locType}</span></td>
+      <td class="num">${fmt(v.qty)}</td>
+      <td>${targets.length ? 'ย้ายไปพื้นที่ ' + v.need + ': ' + targets.map(locChip).join(' ') : '<span class="qty-warn">ยังไม่มีพื้นที่ประเภท ' + v.need + ' ในคลังนี้</span>'}</td>
+      <td style="text-align:right"><button class="btn btn-outline btn-sm" onclick="openMoveModal()">🔁 ย้าย</button></td>
+    </tr>`;
+  }).join('') : '<tr class="empty-row"><td colspan="9">✅ สินค้าทุกรายการจัดเก็บถูกต้องตาม Storage Rule</td></tr>';
+
+  // สรุปแท่ง
+  const byType = {};
+  DB.moves.forEach(m => byType[m.type] = (byType[m.type]||0) + Math.abs(m.qty));
+  const maxT = Math.max(1, ...Object.values(byType));
+  const colors = { 'รับเข้า':'#22c55e', 'จัดเก็บ':'#a78bfa', 'เบิกออก':'#3b82f6', 'ส่งออก':'#fbbf24', 'ย้าย':'#94a3b8', 'ปรับยอด':'#f87171' };
+  $('rp-bars').innerHTML = Object.entries(byType).map(([t,v]) => `
+    <div class="bar-row"><div class="bl">${t}</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxT*100)}%; background:${colors[t]||'#64748b'}">${fmt(v)}</div></div></div>`).join('')
+    || '<p style="color:var(--muted)">ยังไม่มีข้อมูล</p>';
+
+  const bySku = {};
+  DB.moves.forEach(m => bySku[m.sku] = (bySku[m.sku]||0) + Math.abs(m.qty));
+  const top = Object.entries(bySku).sort((a,b) => b[1]-a[1]).slice(0,5);
+  const maxS = Math.max(1, ...top.map(t => t[1]));
+  $('rp-top-bars').innerHTML = top.map(([sku,v]) => `
+    <div class="bar-row"><div class="bl mono">${sku}</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxS*100)}%; background:linear-gradient(90deg,#3b82f6,#a78bfa)">${fmt(v)}</div></div></div>`).join('')
+    || '<p style="color:var(--muted)">ยังไม่มีข้อมูล</p>';
+
+  renderInvReports();
+}
+
+// ---------- Inventory Reports (10 รายงาน) ----------
+function stockCardData(sku) {
+  // เดินย้อนจากยอดปัจจุบันกลับไปหารายการเก่าสุด เพื่อคำนวณคงเหลือหลังแต่ละรายการ
+  const moves = DB.moves.filter(m => m.sku === sku).sort((a,b) => a.ts.localeCompare(b.ts));
+  const delta = m => m.type === 'รับเข้า' ? +m.qty
+    : (m.type === 'ส่งออก' || m.type === 'ตีกลับ') ? -m.qty
+    : m.type === 'ปรับยอด' ? +m.qty : 0;
+  let bal = totalQty(sku);
+  const out = [];
+  for (let i = moves.length - 1; i >= 0; i--) {
+    out.unshift({ ...moves[i], d: delta(moves[i]), bal });
+    bal -= delta(moves[i]);
+  }
+  return out;
+}
+function renderInvReports() {
+  const wf = whFilter();
+  const rows = DB.stock.filter(s => !wf || s.wh === wf);
+  const tdy = today();
+
+  // ---- Available Inventory ----
+  $('tbl-rp-availinv').innerHTML = DB.products.map(p => {
+    const b = invBreakdown(p.sku, wf);
+    return `<tr><td class="mono">${p.sku}</td><td>${p.name}</td>
+      <td class="num">${fmt(b.total)}</td><td class="num">${fmt(b.sellable)}</td>
+      <td class="num" style="color:var(--warning)">${b.reserved ? '−' + fmt(b.reserved) : '0'}</td>
+      <td class="num" style="color:var(--danger)">${fmt(b.blocked)}</td>
+      <td class="num" style="color:var(--muted)">${fmt(b.staging)}</td>
+      <td class="num" style="font-weight:800; color:${b.available > 0 ? 'var(--success)' : 'var(--danger)'}">${fmt(b.available)}</td>
+      <td>${unitName(p.unit)}</td>
+      <td>${b.available <= 0 ? '<span class="badge b-red"><span class="dot"></span> เบิกไม่ได้</span>' : b.available < p.min ? '<span class="badge b-amber"><span class="dot"></span> ใกล้หมด</span>' : '<span class="badge b-green"><span class="dot"></span> พร้อมเบิก</span>'}</td></tr>`;
+  }).join('');
+
+  // ---- Inventory Status ----
+  const stSum = { AVAILABLE:0, HOLD:0, DAMAGED:0, QUARANTINE:0 };
+  rows.forEach(s => stSum[s.status || 'AVAILABLE'] += s.qty);
+  const totalReserved = DB.products.reduce((a,p) => a + reservedQty(p.sku), 0);
+  $('invstatus-kpis').innerHTML = `
+    <div class="kpi"><div class="kico k-green">✅</div><div><div class="num">${fmt(stSum.AVAILABLE)}</div><div class="lbl">Available</div></div></div>
+    <div class="kpi"><div class="kico k-blue">📌</div><div><div class="num">${fmt(totalReserved)}</div><div class="lbl">Reserved (จองจาก DO)</div></div></div>
+    <div class="kpi"><div class="kico k-amber">✋</div><div><div class="num">${fmt(stSum.HOLD)}</div><div class="lbl">Hold</div></div></div>
+    <div class="kpi"><div class="kico k-red">💔</div><div><div class="num">${fmt(stSum.DAMAGED)}</div><div class="lbl">Damaged</div></div></div>
+    <div class="kpi"><div class="kico k-purple">🔒</div><div><div class="num">${fmt(stSum.QUARANTINE)}</div><div class="lbl">Quarantine</div></div></div>`;
+  $('tbl-rp-invstatus').innerHTML = DB.stock.map((s,i) => ({s,i}))
+    .filter(x => !wf || x.s.wh === wf)
+    .sort((a,b) => (a.s.status||'A').localeCompare(b.s.status||'A') || a.s.sku.localeCompare(b.s.sku))
+    .map(({s,i}) => `
+    <tr><td class="mono">${s.sku}</td><td>${prod(s.sku).name}</td><td class="mono">${s.lot}</td>
+      <td>${s.wh}</td><td>${locChip(s.loc)}</td><td class="num">${fmt(s.qty)}</td>
+      <td>${invStatusBadge(s.status || 'AVAILABLE')}</td>
+      <td><select style="width:130px" onchange="setInvStatus(${i}, this.value)">
+        ${Object.keys(INV_STATUS).map(k => `<option value="${k}" ${(s.status||'AVAILABLE')===k?'selected':''}>${INV_STATUS[k].label}</option>`).join('')}
+      </select></td></tr>`).join('') || '<tr class="empty-row"><td colspan="8">ไม่มีข้อมูล</td></tr>';
+
+  // ---- Quarantine ----
+  const qtRows = DB.stock.map((s,i) => ({s,i})).filter(x => (!wf || x.s.wh === wf) && x.s.status === 'QUARANTINE');
+  $('quarantine-count').textContent = qtRows.length ? `พบ ${qtRows.length} รายการ` : '';
+  $('quarantine-count').style.display = qtRows.length ? '' : 'none';
+  $('tbl-rp-quarantine').innerHTML = qtRows.length ? qtRows.map(({s,i}) => `
+    <tr><td class="mono">${s.sku}</td><td>${prod(s.sku).name}</td><td class="mono">${s.lot}</td>
+      <td>${s.wh}</td><td>${locChip(s.loc)}</td><td class="mono">${s.exp || '—'}</td>
+      <td class="num" style="font-weight:700">${fmt(s.qty)}</td>
+      <td class="num">${s.inDate ? fmt(daysDiff(s.inDate, tdy)) : '—'}</td>
+      <td style="text-align:right; white-space:nowrap">
+        <button class="btn btn-success btn-sm" onclick="setInvStatus(${i},'AVAILABLE')">✓ ปล่อยผ่าน</button>
+        <button class="btn btn-danger-o btn-sm" onclick="setInvStatus(${i},'DAMAGED')">✗ ตัดเป็นเสียหาย</button>
+      </td></tr>`).join('') : '<tr class="empty-row"><td colspan="9">✅ ไม่มีสินค้าที่ถูกกักกัน</td></tr>';
+
+  // ---- Stock Card ----
+  const scSel = $('sc-sku');
+  const cur = scSel.value || DB.products[0]?.sku;
+  scSel.innerHTML = DB.products.map(p => `<option value="${p.sku}" ${p.sku===cur?'selected':''}>${p.sku} — ${p.name}</option>`).join('');
+  const card = stockCardData(scSel.value);
+  $('tbl-rp-stockcard').innerHTML = card.length ? card.map(m => `
+    <tr><td class="mono">${m.ts}</td><td>${moveBadge(m.type)}</td><td class="mono">${m.ref}</td>
+      <td>${locChip(m.from)}</td><td>${locChip(m.to)}</td>
+      <td class="num" style="color:var(--success)">${m.d > 0 ? '+' + fmt(m.d) : ''}</td>
+      <td class="num" style="color:var(--danger)">${m.d < 0 ? fmt(m.d) : ''}</td>
+      <td class="num" style="color:var(--muted)">${m.d === 0 ? fmt(m.qty) : ''}</td>
+      <td class="num" style="font-weight:800">${fmt(m.bal)}</td><td>${m.by}</td></tr>`).join('')
+    : '<tr class="empty-row"><td colspan="10">ยังไม่มีความเคลื่อนไหวของ SKU นี้</td></tr>';
+
+  // ---- Inventory Aging ----
+  const AGING = [ ['0–30 วัน',0,30,'#22c55e'], ['31–60 วัน',31,60,'#3b82f6'], ['61–90 วัน',61,90,'#fbbf24'], ['เกิน 90 วัน',91,99999,'#f87171'] ];
+  const ageOf = s => s.inDate ? daysDiff(s.inDate, tdy) : 0;
+  const agingBucket = s => AGING.find(b => ageOf(s) >= b[1] && ageOf(s) <= b[2]);
+  const agSum = AGING.map(b => rows.filter(s => agingBucket(s) === b).reduce((a,s) => a + s.qty, 0));
+  const agMax = Math.max(1, ...agSum);
+  $('aging-bars').innerHTML = AGING.map((b,i) => `
+    <div class="bar-row"><div class="bl">${b[0]}</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${Math.round(agSum[i]/agMax*100)}%; background:${b[3]}">${fmt(agSum[i])}</div></div></div>`).join('');
+  $('tbl-rp-aging').innerHTML = [...rows].sort((a,b) => ageOf(b) - ageOf(a)).map(s => {
+    const b = agingBucket(s);
+    return `<tr><td class="mono">${s.sku}</td><td>${prod(s.sku).name}</td><td class="mono">${s.lot}</td>
+      <td>${locChip(s.loc)}</td><td class="mono">${s.inDate || '—'}</td>
+      <td class="num" style="font-weight:700">${fmt(ageOf(s))}</td><td class="num">${fmt(s.qty)}</td>
+      <td><span class="badge" style="background:${b[3]}22; color:${b[3]}">${b[0]}</span></td></tr>`;
+  }).join('') || '<tr class="empty-row"><td colspan="8">ไม่มีข้อมูล</td></tr>';
+
+  // ---- Slow-moving / Non-moving ----
+  const lastOut = {};
+  DB.moves.filter(m => ['เบิกออก','ส่งออก'].includes(m.type)).forEach(m => {
+    const d = m.ts.slice(0,10);
+    if (!lastOut[m.sku] || d > lastOut[m.sku]) lastOut[m.sku] = d;
+  });
+  $('tbl-rp-slow').innerHTML = DB.products.map(p => {
+    const onhand = totalQty(p.sku, wf);
+    const last = lastOut[p.sku];
+    const days = last ? daysDiff(last, tdy) : null;
+    const cls = last && days <= 30 ? ['Active','b-green'] : last && days <= 60 ? ['Slow-moving','b-amber'] : ['Non-moving','b-red'];
+    return `<tr><td class="mono">${p.sku}</td><td>${p.name}</td><td class="num">${fmt(onhand)}</td>
+      <td class="mono">${last || 'ไม่เคยจ่ายออก'}</td>
+      <td class="num" style="font-weight:700">${last ? fmt(days) : '—'}</td>
+      <td><span class="badge ${cls[1]}"><span class="dot"></span> ${cls[0]}</span></td>
+      <td class="num">${cls[0] !== 'Active' ? fmt(onhand * (p.cost || 0)) : '—'}</td></tr>`;
+  }).join('');
+
+  // ---- Min–Max ----
+  $('tbl-rp-minmax').innerHTML = DB.products.map(p => {
+    const onhand = totalQty(p.sku, wf), avail = invBreakdown(p.sku, wf).available;
+    const below = onhand < p.min, above = p.max && onhand > p.max;
+    const pct = p.max ? Math.min(100, Math.round(onhand / p.max * 100)) : 0;
+    const color = below ? '#f87171' : above ? '#fbbf24' : '#22c55e';
+    return `<tr><td class="mono">${p.sku}</td><td>${p.name}</td>
+      <td class="num">${fmt(p.min)}</td><td class="num">${p.max ? fmt(p.max) : '—'}</td>
+      <td class="num" style="font-weight:700">${fmt(onhand)}</td><td class="num">${fmt(avail)}</td>
+      <td><div class="bar-track" style="height:16px; min-width:120px"><div class="bar-fill" style="width:${pct}%; background:${color}; font-size:.68rem">${pct}%</div></div></td>
+      <td>${below ? '<span class="badge b-red"><span class="dot"></span> ต่ำกว่า Min</span>' : above ? '<span class="badge b-amber"><span class="dot"></span> เกิน Max</span>' : '<span class="badge b-green"><span class="dot"></span> ปกติ</span>'}</td>
+      <td class="num">${below ? '<b style="color:var(--danger)">สั่งซื้อ ' + fmt((p.max || p.min * 2) - onhand) + '</b>' : above ? '<b style="color:var(--warning)">ระบายออก ' + fmt(onhand - p.max) + '</b>' : '—'}</td></tr>`;
+  }).join('');
+
+  // ---- Negative Inventory ----
+  const negs = rows.filter(s => s.qty < 0);
+  $('negative-count').textContent = negs.length ? `พบ ${negs.length} รายการ` : '';
+  $('negative-count').style.display = negs.length ? '' : 'none';
+  $('tbl-rp-negative').innerHTML = negs.length ? negs.map(s => `
+    <tr><td class="mono">${s.sku}</td><td>${prod(s.sku).name}</td><td class="mono">${s.lot}</td>
+      <td>${s.wh}</td><td>${locChip(s.loc)}</td>
+      <td class="num qty-warn">${fmt(s.qty)}</td>
+      <td>ตรวจนับจริง (Cycle Count) แล้วปรับยอดพร้อมระบุสาเหตุ</td></tr>`).join('')
+    : '<tr class="empty-row"><td colspan="7">✅ ไม่พบสต๊อกติดลบ — ข้อมูลคงคลังถูกต้อง</td></tr>';
+
+  // ---- Inventory Valuation ----
+  const vals = DB.products.map(p => ({ p, onhand: totalQty(p.sku, wf), value: totalQty(p.sku, wf) * (p.cost || 0) }));
+  const grand = vals.reduce((a,v) => a + v.value, 0);
+  $('tbl-rp-valuation').innerHTML = vals.map(v => `
+    <tr><td class="mono">${v.p.sku}</td><td>${v.p.name}</td><td>${v.p.cat}</td>
+      <td class="num">${fmt(v.onhand)}</td><td>${unitName(v.p.unit)}</td>
+      <td class="num">${fmt(v.p.cost || 0)}</td>
+      <td class="num" style="font-weight:700">${fmt(v.value)}</td>
+      <td class="num">${grand ? (v.value / grand * 100).toFixed(1) : 0}%</td></tr>`).join('')
+    + `<tr style="background:var(--card2); font-weight:800"><td colspan="6">มูลค่ารวมทั้งคลัง</td><td class="num" style="color:#93c5fd">${fmt(grand)}</td><td class="num">100%</td></tr>`;
+
+  // ---- Lot / Serial Balance ----
+  const lots = {};
+  rows.forEach(s => {
+    const key = s.sku + '|' + s.lot;
+    if (!lots[key]) lots[key] = { sku:s.sku, lot:s.lot, qty:0, locs:[], exp:s.exp, inDate:s.inDate, sts:new Set() };
+    const L = lots[key];
+    L.qty += s.qty; L.locs.push(s.wh + '/' + s.loc);
+    if (s.exp && (!L.exp || s.exp < L.exp)) L.exp = s.exp;
+    if (s.inDate && (!L.inDate || s.inDate < L.inDate)) L.inDate = s.inDate;
+    L.sts.add(s.status || 'AVAILABLE');
+  });
+  $('tbl-rp-lot').innerHTML = Object.values(lots).sort((a,b) => a.sku.localeCompare(b.sku)).map(L => `
+    <tr><td class="mono">${L.sku}</td><td>${prod(L.sku).name}</td><td class="mono">${L.lot}</td>
+      <td class="mono">${L.inDate || '—'}</td><td class="mono">${L.exp || '—'}</td>
+      <td class="num" style="font-weight:700">${fmt(L.qty)}</td><td>${unitName(prod(L.sku).unit)}</td>
+      <td>${L.locs.map(locChip).join(' ')}</td>
+      <td>${[...L.sts].map(invStatusBadge).join(' ')}</td></tr>`).join('')
+    || '<tr class="empty-row"><td colspan="9">ไม่มีข้อมูล</td></tr>';
+
+  // ---- Expiry Report ----
+  const d30 = dateAddDays(30), d90 = dateAddDays(90);
+  const expRows = rows.filter(s => s.exp).sort((a,b) => a.exp.localeCompare(b.exp));
+  const expired = expRows.filter(s => s.exp < tdy);
+  const e30 = expRows.filter(s => s.exp >= tdy && s.exp <= d30);
+  const e90 = expRows.filter(s => s.exp > d30 && s.exp <= d90);
+  $('expiry-kpis').innerHTML = `
+    <div class="kpi"><div class="kico k-red">⛔</div><div><div class="num">${fmt(expired.reduce((a,s)=>a+s.qty,0))}</div><div class="lbl">หมดอายุแล้ว (${expired.length} รายการ)</div></div></div>
+    <div class="kpi"><div class="kico k-amber">⚠️</div><div><div class="num">${fmt(e30.reduce((a,s)=>a+s.qty,0))}</div><div class="lbl">หมดอายุใน 30 วัน</div></div></div>
+    <div class="kpi"><div class="kico k-blue">⏰</div><div><div class="num">${fmt(e90.reduce((a,s)=>a+s.qty,0))}</div><div class="lbl">หมดอายุใน 31–90 วัน</div></div></div>`;
+  $('tbl-rp-expiry').innerHTML = expRows.length ? expRows.map(s => {
+    const left = daysDiff(tdy, s.exp);
+    const risk = s.exp < tdy ? ['หมดอายุแล้ว','b-red','นำออกจากคลัง / ทำลายตามระเบียบ']
+      : s.exp <= d30 ? ['≤ 30 วัน','b-amber','เร่งระบาย / แจ้งฝ่ายขายทำโปรโมชัน']
+      : s.exp <= d90 ? ['≤ 90 วัน','b-blue','วางแผนระบายก่อนล็อตใหม่'] : ['ปกติ','b-green','—'];
+    return `<tr><td class="mono">${s.sku}</td><td>${prod(s.sku).name}</td><td class="mono">${s.lot}</td>
+      <td>${locChip(s.loc)}</td><td class="mono ${s.exp < tdy ? 'qty-warn' : ''}">${s.exp}</td>
+      <td class="num" style="font-weight:700; color:${left < 0 ? 'var(--danger)' : left <= 30 ? 'var(--warning)' : 'var(--ink)'}">${fmt(left)}</td>
+      <td class="num">${fmt(s.qty)}</td>
+      <td><span class="badge ${risk[1]}"><span class="dot"></span> ${risk[0]}</span></td><td>${risk[2]}</td></tr>`;
+  }).join('') : '<tr class="empty-row"><td colspan="9">ไม่มีสินค้าที่ระบุวันหมดอายุ</td></tr>';
+}
+function setInvStatus(i, v) {
+  const s = DB.stock[i];
+  const wasQuarantine = s.status === 'QUARANTINE';
+  s.status = v === 'AVAILABLE' ? undefined : v;
+  renderAll(); showReportCard(wasQuarantine ? 'rp-quarantine' : 'rp-invstatus');
+  toast(`เปลี่ยนสถานะ ${s.sku} @${s.loc} เป็น ${INV_STATUS[v].label} แล้ว`);
+}
+function exportCSV(which) {
+  let rows, name;
+  if (which === 'stock') {
+    name = 'stock-report.csv';
+    rows = [['SKU','Product','Category','Total Qty','Unit','Min'],
+      ...DB.products.map(p => [p.sku, p.name, p.cat, totalQty(p.sku, whFilter()), p.unit, p.min])];
+  } else if (which === 'space') {
+    name = 'space-utilization-report.csv';
+    rows = [['Warehouse','Zone','Location','Type','Capacity','Used','Free','Util%','Status'],
+      ...locUsage().map(u => [u.wh, u.zone, u.code, u.type, u.cap, u.used, Math.max(0,u.cap-u.used), u.pct, u.status])];
+  } else if (which === 'comply') {
+    name = 'storage-rule-violation-report.csv';
+    rows = [['SKU','Product','StorageRule','Warehouse','Location','LocationType','RequiredType','Qty'],
+      ...storageViolations().map(v => [v.sku, prod(v.sku).name, STORAGE_META[v.st].label, v.wh, v.loc, v.locType, v.need, v.qty])];
+  } else if (which === 'availinv') {
+    name = 'available-inventory-report.csv';
+    rows = [['SKU','Product','OnHand','Sellable','Reserved','Blocked','Staging','Available','Unit'],
+      ...DB.products.map(p => { const b = invBreakdown(p.sku, whFilter());
+        return [p.sku, p.name, b.total, b.sellable, b.reserved, b.blocked, b.staging, b.available, p.unit]; })];
+  } else if (which === 'stockcard') {
+    const sku = $('sc-sku').value;
+    name = 'stock-card-' + sku + '.csv';
+    rows = [['DateTime','Type','Ref','From','To','In','Out','Transfer','Balance','By'],
+      ...stockCardData(sku).map(m => [m.ts, m.type, m.ref, m.from, m.to,
+        m.d > 0 ? m.d : '', m.d < 0 ? -m.d : '', m.d === 0 ? m.qty : '', m.bal, m.by])];
+  } else if (which === 'valuation') {
+    name = 'inventory-valuation-report.csv';
+    rows = [['SKU','Product','Category','OnHand','Unit','UnitCost','TotalValue'],
+      ...DB.products.map(p => [p.sku, p.name, p.cat, totalQty(p.sku, whFilter()), p.unit, p.cost || 0, totalQty(p.sku, whFilter()) * (p.cost || 0)])];
+  } else if (which === 'expiry') {
+    name = 'expiry-report.csv';
+    rows = [['SKU','Product','Lot','Warehouse','Location','ExpiryDate','DaysLeft','Qty'],
+      ...DB.stock.filter(s => s.exp).sort((a,b) => a.exp.localeCompare(b.exp))
+        .map(s => [s.sku, prod(s.sku).name, s.lot, s.wh, s.loc, s.exp, daysDiff(today(), s.exp), s.qty])];
+  } else {
+    name = 'movement-report.csv';
+    rows = [['DateTime','Type','SKU','Qty','From','To','Ref','By'],
+      ...DB.moves.map(m => [m.ts, m.type, m.sku, m.qty, m.from, m.to, m.ref, m.by])];
+  }
+  const csv = '﻿' + rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
+  a.download = name; a.click();
+  toast('ดาวน์โหลด ' + name + ' แล้ว');
+}
+
+// ---------- Settings ----------
+const SETTING_TABS = ['set-products','set-units','set-wh','set-zones','set-locations','set-users','set-customers','set-vendors'];
+function switchSetting(btn) { switchSettingTab(btn.dataset.stab); }
+function switchSettingTab(stab) {
+  document.querySelectorAll('.tabs [data-stab]').forEach(t => t.classList.toggle('active', t.dataset.stab === stab));
+  SETTING_TABS.forEach(id => $(id).style.display = id===stab ? '' : 'none');
+}
+function renderSettings() {
+  $('tbl-set-products').innerHTML = DB.products.map((p,i) => `
+    <tr><td class="mono">${p.sku}</td><td>${p.name}</td><td>${p.cat}</td><td>${p.unit} (${unitName(p.unit)})</td>
+    <td class="mono">${dimText(p)}</td>
+    <td class="num">${p.netW != null ? p.netW : '—'}</td>
+    <td class="num">${p.grossW != null ? p.grossW : '—'}</td>
+    <td>${ruleBadge(p.rule || 'FIFO')}</td>
+    <td>${storageBadge(p.storage || 'GEN')}</td>
+    <td class="num">${fmt(p.min)}</td>
+    <td style="text-align:right"><button class="btn btn-danger-o btn-sm" onclick="delMaster('products',${i})">🗑 ลบ</button></td></tr>`).join('');
+  $('tbl-set-units').innerHTML = DB.units.map((u,i) => `
+    <tr><td class="mono">${u.code}</td><td>${u.name}</td>
+    <td style="text-align:right"><button class="btn btn-danger-o btn-sm" onclick="delMaster('units',${i})">🗑 ลบ</button></td></tr>`).join('');
+  $('tbl-set-wh').innerHTML = DB.warehouses.map((w,i) => `
+    <tr><td class="mono">${w.code}</td><td>${w.name}</td><td>${w.address}</td>
+    <td style="text-align:right"><button class="btn btn-danger-o btn-sm" onclick="delMaster('warehouses',${i})">🗑 ลบ</button></td></tr>`).join('');
+  $('tbl-set-zones').innerHTML = DB.zones.map((z,i) => `
+    <tr><td class="mono">${z.code}</td><td>${z.name}</td><td>${z.wh}</td><td>${z.type}</td>
+    <td style="text-align:right"><button class="btn btn-danger-o btn-sm" onclick="delMaster('zones',${i})">🗑 ลบ</button></td></tr>`).join('');
+  $('tbl-set-locations').innerHTML = DB.locations.map((l,i) => `
+    <tr><td>${locChip(l.code)}</td><td>${l.wh}</td><td>${l.zone}</td><td>${l.type}</td><td class="num">${fmt(l.cap)}</td>
+    <td style="text-align:right"><button class="btn btn-danger-o btn-sm" onclick="delMaster('locations',${i})">🗑 ลบ</button></td></tr>`).join('');
+  $('tbl-set-users').innerHTML = DB.users.map((u,i) => `
+    <tr><td>${u.name}</td><td>${u.email}</td><td><span class="badge ${u.role==='ผู้ดูแลระบบ'?'b-purple':u.role==='หัวหน้าคลัง'?'b-blue':'b-gray'}">${u.role}</span></td>
+    <td>${u.active ? '<span class="badge b-green"><span class="dot"></span> ใช้งาน</span>' : '<span class="badge b-gray"><span class="dot"></span> ปิดใช้งาน</span>'}</td>
+    <td style="text-align:right"><button class="btn btn-outline btn-sm" onclick="toggleUser(${i})">${u.active?'ปิดใช้งาน':'เปิดใช้งาน'}</button></td></tr>`).join('');
+  $('tbl-set-customers').innerHTML = DB.customers.map((c,i) => `
+    <tr><td class="mono">${c.code}</td><td>${c.name}</td><td>${c.contact}</td><td>${c.phone}</td><td>${c.address}</td>
+    <td style="text-align:right"><button class="btn btn-danger-o btn-sm" onclick="delMaster('customers',${i})">🗑 ลบ</button></td></tr>`).join('');
+  $('tbl-set-vendors').innerHTML = DB.vendors.map((v,i) => `
+    <tr><td class="mono">${v.code}</td><td>${v.name}</td><td>${v.contact}</td><td>${v.phone}</td><td>${v.address}</td>
+    <td style="text-align:right"><button class="btn btn-danger-o btn-sm" onclick="delMaster('vendors',${i})">🗑 ลบ</button></td></tr>`).join('');
+  renderWhFilter();
+  renderUomPanel();
+}
+// ---------- Units of Measure per product ----------
+function renderUomPanel() {
+  const sel = $('uom-sku-select');
+  if (!sel) return;
+  const cur = DB.products.some(p => p.sku === sel.value) ? sel.value : DB.products[0]?.sku;
+  sel.innerHTML = DB.products.map(p => `<option value="${p.sku}" ${p.sku===cur?'selected':''}>${p.sku} — ${p.name}</option>`).join('');
+  if (!cur) { $('uom-panel-subtitle').textContent = ''; $('tbl-uom-panel').innerHTML = ''; return; }
+  const p = prod(cur);
+  const list = uomList(cur);
+  $('uom-panel-subtitle').textContent = `Units of Measure (${list.length}) — ${cur} ${p.name}`;
+  $('tbl-uom-panel').innerHTML = list.map(u => `
+    <tr>
+      <td><b>${u.code}</b> (${unitName(u.code)})${u.code===p.unit ? ' <span class="badge b-gray">หน่วยฐาน</span>' : ''}</td>
+      <td class="mono">1 ${u.code} = ${fmt(u.factor)} ${p.unit}</td>
+      <td style="text-align:right">${u.code!==p.unit ? `<button class="btn btn-danger-o btn-sm" onclick="deleteUom('${cur}','${u.code}')">🗑 ลบ</button>` : ''}</td>
+    </tr>`).join('');
+}
+function openAddUomModal() {
+  const sku = $('uom-sku-select').value;
+  if (!sku) return toast('⚠️ กรุณาเพิ่มสินค้าก่อน');
+  const p = prod(sku);
+  const used = new Set(uomList(sku).map(u => u.code));
+  const avail = DB.units.filter(u => !used.has(u.code));
+  if (!avail.length) return toast('⚠️ ใช้ครบทุกหน่วยที่มีในระบบแล้ว — เพิ่มรหัสหน่วยใหม่ที่ตาราง "หน่วยนับสินค้า" ก่อน');
+  openModal(`เพิ่มหน่วยแปลงให้ ${sku} — ${p.name}`, `
+    <div class="form-grid">
+      <div class="field"><label>หน่วย</label><select id="uom-code">${avail.map(u=>`<option value="${u.code}">${u.code} — ${u.name}</option>`).join('')}</select></div>
+      <div class="field"><label>1 หน่วยนี้ = กี่ ${p.unit} (หน่วยฐาน)</label><input type="number" id="uom-factor" min="0" step="0.001" value="1"></div>
+    </div>
+    <p class="hint" style="margin-top:10px">ตัวอย่าง: ถ้า 1 CTN บรรจุ 24 PCS ให้เลือกหน่วย CTN แล้วกรอก 24</p>
+  `, `<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveUom('${sku}')">บันทึก</button>`);
+}
+function saveUom(sku) {
+  const code = $('uom-code').value;
+  const factor = +$('uom-factor').value;
+  if (!factor || factor <= 0) return toast('⚠️ กรุณากรอกอัตราแปลงมากกว่า 0');
+  const p = prod(sku);
+  p.uoms = p.uoms || [];
+  p.uoms.push({ code, factor });
+  closeModal(); renderSettings();
+  toast(`เพิ่มหน่วย ${code} ให้ ${sku} แล้ว (1 ${code} = ${fmt(factor)} ${p.unit})`);
+}
+function deleteUom(sku, code) {
+  const p = prod(sku);
+  p.uoms = (p.uoms || []).filter(u => u.code !== code);
+  renderSettings();
+  toast(`ลบหน่วย ${code} ของ ${sku} แล้ว`);
+}
+function toggleUser(i) { DB.users[i].active = !DB.users[i].active; renderSettings(); }
+function delMaster(coll, i) {
+  const item = DB[coll][i];
+  if (coll === 'products' && DB.stock.some(s => s.sku === item.sku)) return toast('⚠️ ลบไม่ได้ — สินค้านี้ยังมีสต๊อกคงเหลือ');
+  if (coll === 'locations' && DB.stock.some(s => s.loc === item.code && s.wh === item.wh)) return toast('⚠️ ลบไม่ได้ — Location นี้ยังมีสต๊อก');
+  if (coll === 'warehouses' && DB.stock.some(s => s.wh === item.code)) return toast('⚠️ ลบไม่ได้ — คลังนี้ยังมีสต๊อก');
+  if (coll === 'units' && DB.products.some(p => p.unit === item.code || (p.uoms||[]).some(u => u.code === item.code)))
+    return toast('⚠️ ลบไม่ได้ — มีสินค้าใช้หน่วยนี้อยู่ (เป็นหน่วยฐานหรือหน่วยแปลง)');
+  DB[coll].splice(i,1);
+  renderAll(); toast('ลบข้อมูลแล้ว');
+}
+
+const MASTER_FORMS = {
+  product: { title:'เพิ่มสินค้า', fields:[
+      ['sku','SKU','text','SKU-xxxx'], ['name','ชื่อสินค้า','text',''], ['cat','หมวดหมู่','text',''],
+      ['unit','หน่วย','select',()=>DB.units.map(u=>[u.code,`${u.code} — ${u.name}`])],
+      ['rule','Putaway/Picking Rule','select',()=>[
+        ['FIFO','FIFO — เข้าก่อน ออกก่อน (Flow Rack)'],
+        ['FEFO','FEFO — หมดอายุก่อน ออกก่อน (บังคับกรอก EXP)'],
+        ['LIFO','LIFO — เข้าทีหลัง ออกก่อน (Drive-in Rack)']]],
+      ['storage','เงื่อนไขจัดเก็บ (Storage Rule)','select',()=>[
+        ['GEN','ทั่วไป — เก็บได้ทุกพื้นที่'],
+        ['COLD','ควบคุมอุณหภูมิ — ต้องอยู่พื้นที่ Cold'],
+        ['HAZ','สินค้าอันตราย — ต้องอยู่พื้นที่ Hazmat']]],
+      ['w','กว้าง (ซม.)','number','0'], ['l','ยาว (ซม.)','number','0'], ['h','สูง (ซม.)','number','0'],
+      ['netw','Net Weight (กก./หน่วย)','number','0'], ['grossw','Gross Weight (กก./หน่วย)','number','0'],
+      ['min','จุดสั่งซื้อ (Min)','number','0'], ['max','สต๊อกสูงสุด (Max)','number','0'], ['cost','ต้นทุน/หน่วย (บาท)','number','0'] ],
+    save:v => DB.products.push({ sku:v.sku, name:v.name, cat:v.cat, unit:v.unit, rule:v.rule, storage:v.storage,
+      dim:{ w:+v.w||0, l:+v.l||0, h:+v.h||0 }, netW:+v.netw||0, grossW:+v.grossw||0,
+      min:+v.min||0, max:+v.max||0, cost:+v.cost||0 }) },
+  unit: { title:'เพิ่มหน่วยสินค้า', fields:[ ['code','รหัสหน่วย','text','เช่น PCS'], ['name','ชื่อหน่วย','text','เช่น ชิ้น'] ],
+    save:v => DB.units.push({ code:v.code.toUpperCase(), name:v.name }) },
+  warehouse: { title:'เพิ่มคลังสินค้า', fields:[ ['code','รหัสคลัง','text','เช่น WH3'], ['name','ชื่อคลัง','text',''], ['address','ที่ตั้ง','text',''] ],
+    save:v => DB.warehouses.push({ code:v.code.toUpperCase(), name:v.name, address:v.address }) },
+  zone: { title:'เพิ่ม Zone', fields:[
+      ['code','รหัส Zone','text','เช่น D'], ['name','ชื่อ Zone','text',''],
+      ['wh','คลัง','select',()=>DB.warehouses.map(w=>[w.code,w.code+' — '+w.name])],
+      ['type','ประเภท','select',()=>['Storage','Fast-moving','Cold Storage','Receiving','Shipping','Quarantine'].map(t=>[t,t])] ],
+    save:v => DB.zones.push({ code:v.code.toUpperCase(), name:v.name, wh:v.wh, type:v.type }) },
+  location: { title:'เพิ่ม Location', fields:[
+      ['code','รหัส Location','text','เช่น A-03-01'],
+      ['wh','คลัง','select',()=>DB.warehouses.map(w=>[w.code,w.code+' — '+w.name])],
+      ['zone','Zone','select',()=>[...new Set(DB.zones.map(z=>z.code))].map(z=>[z,z])],
+      ['type','ประเภท','select',()=>['Rack','Shelf','Floor','Cold','Flow Rack','Drive-in','Hazmat','Staging'].map(t=>[t,t])],
+      ['cap','ความจุ','number','100'] ],
+    save:v => DB.locations.push({ code:v.code.toUpperCase(), wh:v.wh, zone:v.zone, type:v.type, cap:+v.cap||0 }) },
+  user: { title:'เพิ่มผู้ใช้งาน', fields:[
+      ['name','ชื่อผู้ใช้','text',''], ['email','อีเมล','text',''],
+      ['role','บทบาท','select',()=>['ผู้ดูแลระบบ','หัวหน้าคลัง','พนักงานคลัง','ผู้ดูรายงาน'].map(r=>[r,r])] ],
+    save:v => DB.users.push({ name:v.name, email:v.email, role:v.role, active:true }) },
+  customer: { title:'เพิ่มลูกค้า', fields:[
+      ['code','รหัสลูกค้า','text','เช่น CUS-003'], ['name','ชื่อลูกค้า / แผนก','text',''],
+      ['contact','ผู้ติดต่อ','text',''], ['phone','เบอร์โทร','text',''], ['address','ที่อยู่','text',''] ],
+    save:v => DB.customers.push({ code:v.code.toUpperCase(), name:v.name, contact:v.contact, phone:v.phone, address:v.address }) },
+  vendor: { title:'เพิ่มผู้ขาย', fields:[
+      ['code','รหัสผู้ขาย','text','เช่น VEN-004'], ['name','ชื่อผู้ขาย','text',''],
+      ['contact','ผู้ติดต่อ','text',''], ['phone','เบอร์โทร','text',''], ['address','ที่อยู่','text',''] ],
+    save:v => DB.vendors.push({ code:v.code.toUpperCase(), name:v.name, contact:v.contact, phone:v.phone, address:v.address }) },
+};
+function openMasterModal(kind) {
+  const f = MASTER_FORMS[kind];
+  openModal(f.title, `<div class="form-grid">${f.fields.map(([k,lbl,type,ph]) => `
+    <div class="field"><label>${lbl}</label>
+      ${type==='select'
+        ? `<select id="mf-${k}">${ph().map(([v,t])=>`<option value="${v}">${t}</option>`).join('')}</select>`
+        : `<input id="mf-${k}" type="${type}" placeholder="${ph}">`}
+    </div>`).join('')}</div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
+     <button class="btn btn-primary" onclick="saveMaster('${kind}')">บันทึก</button>`);
+}
+function saveMaster(kind) {
+  const f = MASTER_FORMS[kind];
+  const v = {};
+  for (const [k,lbl,type] of f.fields) {
+    v[k] = $('mf-'+k).value.trim();
+    if (!v[k] && type !== 'number') return toast('⚠️ กรุณากรอก' + lbl);
+  }
+  f.save(v);
+  closeModal(); renderAll(); toast('บันทึกข้อมูลแล้ว');
+}
+
+// ---------- Excel Import (ASN / Delivery Order) ----------
+let importCtx = null; // { kind, groups }
+
+const IMPORT_CFG = {
+  asn: {
+    title: '📄 นำเข้า ASN จาก Excel',
+    desc: 'คอลัมน์ที่ต้องมี: <b>PO, Supplier, Warehouse, Date, SKU, Qty</b> · คอลัมน์ <b>Unit</b> ไม่บังคับ (ไม่ระบุ = หน่วยฐาน) ใส่ได้ทั้งหน่วยฐานหรือหน่วยแปลงที่ตั้งค่าไว้ต่อสินค้า เช่น BOX, CTN — แถวที่มี PO เดียวกันจะรวมเป็น ASN ใบเดียว (เว้นว่าง PO/Supplier เพื่อใช้ค่าจากแถวก่อนหน้าได้)',
+    template: {
+      name: 'ASN-import-template.xlsx',
+      aoa: [
+        ['PO','Supplier','Warehouse','Date','SKU','Qty','Unit'],
+        ['PO-2607-125','บจก.ตัวอย่างการค้า','WH1','2026-08-01','SKU-1001',100,'PCS'],
+        ['','','','','SKU-1004',50,''],
+        ['PO-2607-126','บจก.แพ็คกิ้งซัพพลาย','WH1','2026-08-02','SKU-1005',5,'BOX'],
+      ],
+    },
+  },
+  do: {
+    title: '📄 นำเข้า Delivery Order จาก Excel',
+    desc: 'คอลัมน์ที่ต้องมี: <b>Customer, Date, SKU, Qty</b> · คอลัมน์ <b>Unit</b> ไม่บังคับ (ไม่ระบุ = หน่วยฐาน) ใส่ได้ทั้งหน่วยฐานหรือหน่วยแปลงที่ตั้งค่าไว้ต่อสินค้า เช่น BOX, CTN — แถวที่มี Customer + Date เดียวกันจะรวมเป็น DO ใบเดียว (เว้นว่าง Customer/Date เพื่อใช้ค่าจากแถวก่อนหน้าได้)',
+    template: {
+      name: 'DO-import-template.xlsx',
+      aoa: [
+        ['Customer','Date','SKU','Qty','Unit'],
+        ['ฝ่ายผลิต โรงงาน 2','2026-08-01','SKU-1001',20,'PCS'],
+        ['','','SKU-1005',2,'BOX'],
+        ['บจก.ลูกค้าดีเด่น','2026-08-02','SKU-1006',50,''],
+      ],
+    },
+  },
+};
+
+// จับชื่อคอลัมน์ได้ทั้งอังกฤษ/ไทย ไม่สนตัวพิมพ์-ช่องว่าง
+const IMPORT_HEADERS = {
+  po:       ['po','pono','เลขที่po','ใบสั่งซื้อ','อ้างอิงpo'],
+  supplier: ['supplier','vendor','ผู้ขาย','ที่มา','ผู้ขาย.ที่มา'],
+  wh:       ['warehouse','wh','คลัง','คลังสินค้า','คลังปลายทาง'],
+  date:     ['date','duedate','วันที่','วันที่คาดรับ','วันที่ต้องการ'],
+  sku:      ['sku','itemcode','productcode','รหัสสินค้า','สินค้า'],
+  qty:      ['qty','quantity','จำนวน','จํานวน'],
+  unit:     ['unit','uom','หน่วย','หน่วยนับ'],
+  customer: ['customer','dept','ลูกค้า','แผนก','ลูกค้า.แผนก','ผู้ขอเบิก'],
+};
+function normHeader(h) { return String(h).toLowerCase().replace(/[\s_\-\/()]/g, '').replace(/\./g,'.'); }
+function canonRow(raw) {
+  const out = {};
+  for (const key in raw) {
+    const nk = normHeader(key);
+    for (const canon in IMPORT_HEADERS) {
+      if (IMPORT_HEADERS[canon].some(a => nk === normHeader(a))) { out[canon] = String(raw[key]).trim(); break; }
+    }
+  }
+  return out;
+}
+function normDate(v) {
+  if (!v) return today();
+  const d = new Date(v);
+  return isNaN(d) ? String(v) : d.toISOString().slice(0,10);
+}
+
+function openImportModal(kind) {
+  if (typeof XLSX === 'undefined') return toast('⚠️ โหลดไลบรารีอ่าน Excel ไม่สำเร็จ — ต้องต่ออินเทอร์เน็ตครั้งแรก');
+  const cfg = IMPORT_CFG[kind];
+  importCtx = null;
+  openModal(cfg.title, `
+    <div class="section-note" style="margin-bottom:14px">${cfg.desc}</div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px">
+      <button class="btn btn-outline btn-sm" onclick="downloadTemplate('${kind}')">⬇️ ดาวน์โหลดไฟล์ Template</button>
+      <input type="file" id="imp-file" accept=".xlsx,.xls,.csv" style="width:auto; flex:1; min-width:220px" onchange="handleImportFile('${kind}')">
+    </div>
+    <div id="imp-preview"><p class="hint">เลือกไฟล์ Excel (.xlsx / .xls / .csv) เพื่อดูตัวอย่างข้อมูลก่อนนำเข้า</p></div>
+  `, `<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-primary" id="imp-btn" disabled onclick="confirmImport()">📥 นำเข้าข้อมูล</button>`, true);
+}
+function downloadTemplate(kind) {
+  const t = IMPORT_CFG[kind].template;
+  const ws = XLSX.utils.aoa_to_sheet(t.aoa);
+  ws['!cols'] = t.aoa[0].map(() => ({ wch: 18 }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Import');
+  XLSX.writeFile(wb, t.name);
+  toast('ดาวน์โหลด ' + t.name + ' แล้ว');
+}
+function handleImportFile(kind) {
+  const file = $('imp-file').files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    let rows;
+    try {
+      const wb = XLSX.read(e.target.result, { type:'array' });
+      rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { raw:false, defval:'' });
+    } catch (err) {
+      $('imp-preview').innerHTML = `<p class="qty-warn">⚠️ อ่านไฟล์ไม่สำเร็จ: ${err.message}</p>`;
+      return;
+    }
+    parseImportRows(kind, rows.map(canonRow));
+  };
+  reader.readAsArrayBuffer(file);
+}
+function parseImportRows(kind, rows) {
+  const groups = {};      // key → เอกสาร 1 ใบ
+  const preview = [];     // แถวสำหรับแสดงผล
+  const needBySku = {};   // ตรวจสต๊อกสะสมทั้งไฟล์ (เฉพาะ DO)
+  const ffill = {};       // forward-fill ค่าจากแถวก่อนหน้า
+  let ok = 0, bad = 0;
+
+  rows.forEach((r, idx) => {
+    ['po','supplier','wh','date','customer'].forEach(k => {
+      if (r[k]) ffill[k] = r[k]; else if (ffill[k]) r[k] = ffill[k];
+    });
+    const errs = [];
+    const qty = +String(r.qty||'').replace(/,/g,'');
+    if (!r.sku) errs.push('ไม่มี SKU');
+    else if (!DB.products.some(p => p.sku === r.sku)) errs.push('ไม่พบ SKU ในระบบ');
+    if (!qty || qty <= 0) errs.push('จำนวนไม่ถูกต้อง');
+
+    // แปลงจำนวนเป็นหน่วยฐานตามคอลัมน์ Unit (ไม่ระบุ = หน่วยฐานของสินค้านั้น)
+    let baseQty = qty, unitCode = '';
+    if (!errs.length) {
+      unitCode = r.unit ? String(r.unit).toUpperCase() : prod(r.sku).unit;
+      const factor = uomFactor(r.sku, unitCode);
+      if (factor == null) errs.push('หน่วย "' + r.unit + '" ไม่ถูกต้องสำหรับ ' + r.sku);
+      else baseQty = +(qty * factor).toFixed(3);
+    }
+
+    let key = '';
+    if (kind === 'asn') {
+      if (!r.po) errs.push('ไม่มี PO');
+      if (!r.supplier) errs.push('ไม่มี Supplier');
+      if (r.wh && !DB.warehouses.some(w => w.code === r.wh)) errs.push('ไม่พบคลัง ' + r.wh);
+      key = r.po;
+    } else {
+      if (!r.customer) errs.push('ไม่มี Customer');
+      key = r.customer + '|' + normDate(r.date);
+      if (!errs.length) {
+        needBySku[r.sku] = (needBySku[r.sku]||0) + baseQty;
+        if (needBySku[r.sku] > availableQty(r.sku)) errs.push('สต๊อกเบิกได้ไม่พอ (เบิกได้ ' + fmt(availableQty(r.sku)) + ')');
+      }
+    }
+
+    if (errs.length) bad++; else {
+      ok++;
+      if (!groups[key]) groups[key] = kind === 'asn'
+        ? { po:r.po, supplier:r.supplier, wh:r.wh||'WH1', date:normDate(r.date), items:[] }
+        : { customer:r.customer, date:normDate(r.date), items:[] };
+      const items = groups[key].items;
+      const dup = items.find(i => i.sku === r.sku);
+      if (dup) { if (kind==='asn') dup.expect += baseQty; else dup.qty += baseQty; }
+      else items.push(kind === 'asn' ? { sku:r.sku, expect:baseQty, received:0 } : { sku:r.sku, qty:baseQty, picked:0, from:'' });
+    }
+    preview.push({ idx:idx+2, r, qty, baseQty, unitCode, errs, key });
+  });
+
+  importCtx = bad === 0 && ok > 0 ? { kind, groups } : (ok > 0 ? { kind, groups } : null);
+  $('imp-btn').disabled = !importCtx;
+  const kindCols = kind === 'asn' ? ['PO','Supplier','คลัง'] : ['Customer'];
+  $('imp-preview').innerHTML = `
+    <div style="display:flex; gap:8px; margin-bottom:10px">
+      <span class="badge b-green">✓ ถูกต้อง ${ok} แถว</span>
+      ${bad ? `<span class="badge b-red">✗ ผิดพลาด ${bad} แถว (จะถูกข้าม)</span>` : ''}
+      <span class="badge b-blue">รวมเป็นเอกสาร ${Object.keys(groups).length} ใบ</span>
+    </div>
+    <div class="tbl-wrap" style="max-height:280px; overflow-y:auto"><table>
+      <thead><tr><th>แถว</th>${kindCols.map(c=>`<th>${c}</th>`).join('')}<th>วันที่</th><th>SKU</th><th>หน่วย</th><th class="num">จำนวน (หน่วยฐาน)</th><th>ผลตรวจ</th></tr></thead>
+      <tbody>${preview.slice(0,100).map(p => `
+        <tr>
+          <td class="num">${p.idx}</td>
+          ${kind==='asn' ? `<td class="mono">${p.r.po||'—'}</td><td>${p.r.supplier||'—'}</td><td>${p.r.wh||'WH1'}</td>` : `<td>${p.r.customer||'—'}</td>`}
+          <td>${normDate(p.r.date)}</td><td class="mono">${p.r.sku||'—'}</td>
+          <td class="mono">${p.unitCode || p.r.unit || '—'}</td>
+          <td class="num">${p.qty||'—'}${p.unitCode && p.baseQty!=null && p.unitCode!==prod(p.r.sku).unit ? ' → ' + fmt(p.baseQty) + ' ' + prod(p.r.sku).unit : ''}</td>
+          <td>${p.errs.length ? `<span class="badge b-red">✗ ${p.errs.join(', ')}</span>` : '<span class="badge b-green">✓ พร้อมนำเข้า</span>'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>
+    ${preview.length > 100 ? `<p class="hint">แสดง 100 แถวแรกจาก ${preview.length} แถว</p>` : ''}`;
+}
+function confirmImport() {
+  if (!importCtx) return;
+  const { kind, groups } = importCtx;
+  const list = Object.values(groups).filter(g => g.items.length);
+  if (!list.length) return toast('⚠️ ไม่มีข้อมูลที่นำเข้าได้');
+  const ids = [];
+  list.forEach(g => {
+    if (kind === 'asn') {
+      const id = `ASN-2607-${pad3(seq.grn++)}`;
+      DB.grns.unshift({ id, po:g.po, supplier:g.supplier, wh:g.wh, date:g.date, status:'รอรับ', items:g.items });
+      ids.push(id);
+    } else {
+      const id = `DO-2607-${pad3(seq.pk++)}`;
+      DB.orders.unshift({ id, customer:g.customer, date:g.date, status:'รอจัด', items:g.items });
+      ids.push(id);
+    }
+  });
+  importCtx = null;
+  closeModal(); renderAll();
+  toast(`นำเข้าสำเร็จ ${ids.length} ใบ: ${ids.join(', ')}`);
+}
+
+// ---------- Modal helpers ----------
+function openModal(title, body, foot, wide) {
+  $('modal-title').textContent = title;
+  $('modal-body').innerHTML = body;
+  $('modal-foot').innerHTML = foot || '';
+  $('modal-box').classList.toggle('wide', !!wide);
+  $('modal-overlay').classList.add('open');
+}
+function closeModal() { $('modal-overlay').classList.remove('open'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ---------- Boot ----------
+function renderWhFilter() {
+  const cur = $('wh-filter').value;
+  $('wh-filter').innerHTML = '<option value="">ทุกคลังสินค้า</option>'
+    + DB.warehouses.map(w => `<option value="${w.code}" ${w.code===cur?'selected':''}>${w.code} — ${w.name}</option>`).join('');
+}
+function renderAll() {
+  renderDashboard(); renderInboundFlow(); renderInbound(); renderPutaway(); renderStock();
+  renderPicking(); renderShipping(); renderReports(); renderSettings();
+  renderRelocation(); renderAdjustment();
+}
+renderAll();
+</script>
+</body>
+</html>
